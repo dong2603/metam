@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 입력 페이지</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container" id="gateContainer">
+    <section class="card" id="gateSection">
+      <div class="title-wrap">
+        <h1>관리자 로그인</h1>
+        <p>관리자 입력 페이지는 비밀번호가 맞을 때만 접속할 수 있습니다.</p>
+      </div>
+      <section id="gateMessage" class="message hidden"></section>
+      <label for="adminPassword">비밀번호</label>
+      <input id="adminPassword" type="password" placeholder="비밀번호를 입력하세요" />
+      <div class="button-row">
+        <button id="unlockBtn" type="button">접속하기</button>
+      </div>
+      <p class="note">현재 버전은 순수 HTML + JS 방식이라 비밀번호 보호는 간단한 프론트엔드 잠금 수준입니다.</p>
+    </section>
+  </div>
+
+  <div class="container hidden" id="adminApp">
+    <section class="card">
+      <div class="topbar">
+        <div class="title-wrap">
+          <h1>관리자 입력 페이지</h1>
+          <p>직원 정보와 연차 사용 내역을 직접 입력하거나 엑셀 파일로 가져올 수 있습니다.</p>
+        </div>
+        <div class="nav">
+          <a href="index.html">조회 페이지</a>
+          <button id="logoutBtn" class="ghost-btn" type="button">로그아웃</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="message" class="message hidden"></section>
+
+    <section class="card">
+      <h2>엑셀 가져오기</h2>
+      <p class="note">.xlsx / .xls / .csv 파일을 읽을 수 있습니다. 가장 권장하는 형식은 <strong>employees</strong> 시트와 <strong>histories</strong> 시트가 있는 엑셀 파일입니다. 일반 연차는 1일, 반일 연차는 0.5일 차감되며 생일 연차와 공가 연차는 차감되지 않습니다.</p>
+      <div class="grid-2">
+        <div>
+          <label for="excelFile">엑셀 파일</label>
+          <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" />
+        </div>
+        <div>
+          <label for="replaceMode">가져오기 방식</label>
+          <select id="replaceMode">
+            <option value="merge">기존 데이터 유지 + 병합</option>
+            <option value="replace">기존 데이터 비우고 엑셀로 덮어쓰기</option>
+          </select>
+        </div>
+      </div>
+      <div class="button-row">
+        <button id="importExcelBtn" type="button">엑셀 가져오기</button>
+        <button id="exportExcelBtn" type="button">현재 데이터 엑셀 내보내기</button>
+      </div>
+      <p class="note">시트/열 예시는 아래 템플릿 기준입니다.</p>
+      <div class="code-box">Sheet: employees
+columns: name, rrnFront, department, hireDate, annualLeaveTotal
+
+Sheet: histories
+columns: name, rrnFront, leaveDate, leaveType, reason
+
+leaveType allowed values:
+일반 연차 / 반일 연차 / 생일 연차 / 공가 연차</div>
+      <p class="note">템플릿 파일: <a href="leave-import-template.xlsx" download>leave-import-template.xlsx 다운로드</a></p>
+      <p class="note">내보내기 시 현재 저장된 직원 데이터는 <strong>employees</strong> 시트로, 연차 사용 내역은 <strong>histories</strong> 시트로 저장됩니다.</p>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h2>직원 등록 / 수정</h2>
+        <form id="employeeForm">
+          <label for="employeeNameInput">이름</label>
+          <input id="employeeNameInput" type="text" required />
+
+          <label for="employeeRrnInput">주민등록번호 앞자리</label>
+          <input id="employeeRrnInput" type="text" maxlength="6" required />
+
+          <label for="departmentInput">부서</label>
+          <input id="departmentInput" type="text" />
+
+          <label for="hireDateInput">입사일</label>
+          <input id="hireDateInput" type="date" />
+
+          <label for="annualLeaveTotalInput">총 연차</label>
+          <input id="annualLeaveTotalInput" type="number" step="0.5" value="15" />
+
+          <div class="button-row"><button type="submit">직원 저장</button></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>연차 사용 내역 등록</h2>
+        <form id="historyForm">
+          <label for="employeeSelect">직원 선택</label>
+          <select id="employeeSelect" required></select>
+
+          <label for="leaveDateInput">사용일</label>
+          <input id="leaveDateInput" type="date" required />
+
+          <label for="leaveTypeInput">종류</label>
+          <select id="leaveTypeInput">
+            <option value="일반 연차">일반 연차</option>
+            <option value="반일 연차">반일 연차</option>
+            <option value="생일 연차">생일 연차</option>
+            <option value="공가 연차">공가 연차</option>
+          </select>
+
+          <p class="note">차감 규칙: 일반 연차 1일 / 반일 연차 0.5일 / 생일 연차 0일 / 공가 연차 0일</p>
+
+          <label for="reasonInput">사유</label>
+          <input id="reasonInput" type="text" />
+
+          <div class="button-row"><button type="submit">내역 저장</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="topbar">
+        <h2>등록된 직원</h2>
+        <div class="inline-actions">
+          <button class="light-btn" id="resetSampleBtn" type="button">샘플 데이터 초기화</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>이름</th><th>주민번호 앞자리</th><th>부서</th><th>입사일</th><th>총 연차</th><th>사용 연차</th><th>삭제</th></tr>
+          </thead>
+          <tbody id="employeeTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>연차 사용 내역 목록</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>이름</th><th>사용일</th><th>종류</th><th>차감일수</th><th>사유</th><th>삭제</th></tr>
+          </thead>
+          <tbody id="historyTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>JSON 백업 / 복원</h2>
+      <p class="note">엑셀과 별개로 JSON 백업도 가능합니다.</p>
+      <label for="backupArea">JSON 데이터</label>
+      <textarea id="backupArea"></textarea>
+      <div class="button-row">
+        <button id="exportBtn" type="button">JSON 내보내기</button>
+        <button id="importBtn" type="button">JSON 가져오기</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="xlsx.full.min.js"></script>
+  <script src="storage.js"></script>
+  <script>
+    LeaveStore.seedStoreIfNeeded();
+
+    const ADMIN_PASSWORD = '801300';
+    const ADMIN_SESSION_KEY = 'leaveCheckerAdminUnlocked_v1';
+
+    const gateContainer = document.getElementById('gateContainer');
+    const adminApp = document.getElementById('adminApp');
+    const gateMessage = document.getElementById('gateMessage');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const messageBox = document.getElementById('message');
+    const employeeForm = document.getElementById('employeeForm');
+    const historyForm = document.getElementById('historyForm');
+    const employeeSelect = document.getElementById('employeeSelect');
+    const employeeTableBody = document.getElementById('employeeTableBody');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const backupArea = document.getElementById('backupArea');
+
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = 'message ' + type;
+    }
+
+    function showGateMessage(text, type) {
+      gateMessage.textContent = text;
+      gateMessage.className = 'message ' + type;
+    }
+
+    function hideGateMessage() {
+      gateMessage.textContent = '';
+      gateMessage.className = 'message hidden';
+    }
+
+    function setAdminAccess(isUnlocked) {
+      gateContainer.classList.toggle('hidden', isUnlocked);
+      adminApp.classList.toggle('hidden', !isUnlocked);
+      if (isUnlocked) {
+        render();
+        hideGateMessage();
+      }
+    }
+
+    function unlockAdmin() {
+      const password = adminPasswordInput.value.trim();
+      if (password !== ADMIN_PASSWORD) {
+        showGateMessage('비밀번호가 일치하지 않습니다.', 'error');
+        adminPasswordInput.focus();
+        adminPasswordInput.select();
+        return;
+      }
+      sessionStorage.setItem(ADMIN_SESSION_KEY, 'Y');
+      adminPasswordInput.value = '';
+      setAdminAccess(true);
+      showMessage('관리자 페이지에 접속했습니다.', 'success');
+    }
+
+    function getExcelFileDateText() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return '' + yyyy + mm + dd;
+    }
+
+    function exportCurrentDataToExcel() {
+      const store = LeaveStore.loadStore();
+      const employees = LeaveStore.getEmployees(store);
+      const employeeRows = employees.map(function (employee) {
+        return {
+          name: employee.name,
+          rrnFront: employee.rrnFront,
+          department: employee.department || '',
+          hireDate: employee.hireDate || '',
+          annualLeaveTotal: Number(employee.annualLeaveTotal || 0)
+        };
+      });
+
+      const historyRows = [...store.histories].sort(function (a, b) {
+        return String(b.leaveDate).localeCompare(String(a.leaveDate));
+      }).map(function (history) {
+        const employee = store.employees.find(function (item) { return item.id === history.employeeId; });
+        return {
+          name: employee ? employee.name : '',
+          rrnFront: employee ? employee.rrnFront : '',
+          leaveDate: history.leaveDate || '',
+          leaveType: history.leaveType || '',
+          daysUsed: Number(LeaveStore.getDeductionDaysByType(history.leaveType) || 0),
+          reason: history.reason || ''
+        };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const employeeSheet = XLSX.utils.json_to_sheet(employeeRows.length ? employeeRows : [{ name: '', rrnFront: '', department: '', hireDate: '', annualLeaveTotal: '' }]);
+      const historySheet = XLSX.utils.json_to_sheet(historyRows.length ? historyRows : [{ name: '', rrnFront: '', leaveDate: '', leaveType: '', daysUsed: '', reason: '' }]);
+      XLSX.utils.book_append_sheet(workbook, employeeSheet, 'employees');
+      XLSX.utils.book_append_sheet(workbook, historySheet, 'histories');
+      XLSX.writeFile(workbook, 'leave-data-export-' + getExcelFileDateText() + '.xlsx');
+    }
+
+    function render() {
+      const store = LeaveStore.loadStore();
+      const employees = LeaveStore.getEmployees(store);
+
+      employeeSelect.innerHTML = '<option value="">직원을 선택하세요</option>' + employees.map(function (employee) {
+        return '<option value="' + employee.id + '">' + employee.name + ' / ' + employee.rrnFront + '</option>';
+      }).join('');
+
+      employeeTableBody.innerHTML = employees.length ? employees.map(function (employee) {
+        const summary = LeaveStore.getEmployeeSummary(store, employee);
+        return '<tr>' +
+          '<td>' + employee.name + '</td>' +
+          '<td>' + employee.rrnFront + '</td>' +
+          '<td>' + (employee.department || '-') + '</td>' +
+          '<td>' + (employee.hireDate || '-') + '</td>' +
+          '<td>' + Number(summary.annualLeaveTotal) + '일</td>' +
+          '<td>' + Number(summary.annualLeaveUsed) + '일</td>' +
+          '<td><button class="danger-btn" type="button" onclick="deleteEmployee(\'' + employee.id + '\')">삭제</button></td>' +
+        '</tr>';
+      }).join('') : '<tr><td colspan="7">등록된 직원이 없습니다.</td></tr>';
+
+      const historyRows = [...store.histories].sort(function (a, b) {
+        return String(b.leaveDate).localeCompare(String(a.leaveDate));
+      }).map(function (history) {
+        const employee = store.employees.find(function (item) { return item.id === history.employeeId; });
+        return '<tr>' +
+          '<td>' + (employee ? employee.name : '-') + '</td>' +
+          '<td>' + (history.leaveDate || '-') + '</td>' +
+          '<td>' + (history.leaveType || '-') + '</td>' +
+          '<td>' + Number(LeaveStore.getDeductionDaysByType(history.leaveType) || 0) + '일</td>' +
+          '<td>' + (history.reason || '-') + '</td>' +
+          '<td><button class="danger-btn" type="button" onclick="deleteHistory(\'' + history.id + '\')">삭제</button></td>' +
+        '</tr>';
+      });
+
+      historyTableBody.innerHTML = historyRows.length ? historyRows.join('') : '<tr><td colspan="6">등록된 사용 내역이 없습니다.</td></tr>';
+    }
+
+    employeeForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const name = document.getElementById('employeeNameInput').value.trim();
+      const rrnFront = document.getElementById('employeeRrnInput').value.trim();
+      const department = document.getElementById('departmentInput').value.trim();
+      const hireDate = document.getElementById('hireDateInput').value;
+      const annualLeaveTotal = document.getElementById('annualLeaveTotalInput').value;
+
+      if (!name || !/^\d{6}$/.test(rrnFront)) {
+        showMessage('직원 이름과 주민등록번호 앞 6자리를 정확히 입력해주세요.', 'error');
+        return;
+      }
+
+      LeaveStore.upsertEmployee({ name, rrnFront, department, hireDate, annualLeaveTotal });
+      employeeForm.reset();
+      document.getElementById('annualLeaveTotalInput').value = 15;
+      showMessage('직원 정보가 저장되었습니다.', 'success');
+      render();
+    });
+
+    historyForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const employeeId = employeeSelect.value;
+      const leaveDate = document.getElementById('leaveDateInput').value;
+      const leaveType = document.getElementById('leaveTypeInput').value.trim();
+      const reason = document.getElementById('reasonInput').value.trim();
+
+      if (!employeeId || !leaveDate) {
+        showMessage('직원과 사용일을 입력해주세요.', 'error');
+        return;
+      }
+
+      LeaveStore.addHistory({ employeeId, leaveDate, leaveType, reason });
+      historyForm.reset();
+      document.getElementById('leaveTypeInput').value = '일반 연차';
+      showMessage('연차 사용 내역이 저장되었습니다.', 'success');
+      render();
+    });
+
+    document.getElementById('importExcelBtn').addEventListener('click', function () {
+      const fileInput = document.getElementById('excelFile');
+      const file = fileInput.files[0];
+      if (!file) {
+        showMessage('가져올 엑셀 파일을 선택해주세요.', 'error');
+        return;
+      }
+
+      const replaceAll = document.getElementById('replaceMode').value === 'replace';
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        try {
+          const data = event.target.result;
+          const workbook = XLSX.read(data, { type: 'array' });
+          const nextStore = LeaveStore.normalizeImportedWorkbook(workbook, replaceAll);
+          LeaveStore.setStore(nextStore);
+          render();
+          showMessage('엑셀 데이터를 성공적으로 가져왔습니다.', 'success');
+        } catch (error) {
+          showMessage(error.message || '엑셀 가져오기에 실패했습니다.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById('exportExcelBtn').addEventListener('click', function () {
+      try {
+        exportCurrentDataToExcel();
+        showMessage('현재 데이터를 엑셀 파일로 내보냈습니다.', 'success');
+      } catch (error) {
+        showMessage(error.message || '엑셀 내보내기에 실패했습니다.', 'error');
+      }
+    });
+
+    window.deleteEmployee = function (employeeId) {
+      if (!confirm('직원과 해당 직원의 연차 내역을 모두 삭제할까요?')) return;
+      LeaveStore.removeEmployee(employeeId);
+      render();
+      showMessage('직원 정보가 삭제되었습니다.', 'success');
+    };
+
+    window.deleteHistory = function (historyId) {
+      if (!confirm('이 사용 내역을 삭제할까요?')) return;
+      LeaveStore.removeHistory(historyId);
+      render();
+      showMessage('사용 내역이 삭제되었습니다.', 'success');
+    };
+
+    unlockBtn.addEventListener('click', unlockAdmin);
+    adminPasswordInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') unlockAdmin();
+    });
+
+    logoutBtn.addEventListener('click', function () {
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      setAdminAccess(false);
+      showGateMessage('로그아웃되었습니다. 다시 비밀번호를 입력해주세요.', 'warn');
+      adminPasswordInput.focus();
+    });
+
+    document.getElementById('resetSampleBtn').addEventListener('click', function () {
+      if (!confirm('샘플 데이터로 초기화할까요? 현재 데이터는 덮어써집니다.')) return;
+      LeaveStore.resetStore();
+      render();
+      showMessage('샘플 데이터로 초기화되었습니다.', 'success');
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', function () {
+      backupArea.value = LeaveStore.exportStore();
+      showMessage('JSON 데이터를 내보냈습니다.', 'success');
+    });
+
+    document.getElementById('importBtn').addEventListener('click', function () {
+      try {
+        LeaveStore.importStore(backupArea.value.trim());
+        render();
+        showMessage('JSON 데이터를 가져왔습니다.', 'success');
+      } catch (error) {
+        showMessage(error.message || 'JSON 가져오기에 실패했습니다.', 'error');
+      }
+    });
+
+    if (sessionStorage.getItem(ADMIN_SESSION_KEY) === 'Y') {
+      setAdminAccess(true);
+    } else {
+      setAdminAccess(false);
+      adminPasswordInput.focus();
+    }
+  </script>
+</body>
+</html>
