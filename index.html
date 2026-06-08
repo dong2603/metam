@@ -1,130 +1,1336 @@
+
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연차 사용 현황 조회</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="container">
-    <section class="card">
-      <div class="topbar">
-        <div class="title-wrap">
-          <h1>연차 사용 현황 조회</h1>
-          <p>이름과 주민등록번호 앞 6자리로 연차 현황과 사용 내역을 확인합니다.</p>
-        </div>
-        <div class="nav">
-          <a href="admin.html">관리자 입력 페이지</a>
-        </div>
+<html lang="ko-KR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>메타엠 GOC2 연차 확인 시스템</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      :root {
+        --bg-color: #f8fafc;
+        --card-bg: #ffffff;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --border: #e2e8f0;
+        --danger: #dc2626;
+        --success: #16a34a;
+        --warning: #f59e0b;
+        --info-bg: #eff6ff;
+        --info-border: #bfdbfe;
+        --radius: 8px;
+      }
+
+      body {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 32px 40px;
+        position: relative;
+        box-sizing: border-box;
+        font-family: 'Noto Sans KR', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        line-height: 1.6;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 24px;
+        color: #0f172a;
+      }
+
+      h2,
+      h3,
+      h4 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-weight: 700;
+      }
+
+      p {
+        margin-top: 0;
+        margin-bottom: 16px;
+      }
+
+      .notice-box {
+        background-color: var(--info-bg);
+        border: 1px solid var(--info-border);
+        padding: 16px 20px;
+        border-radius: var(--radius);
+        margin-bottom: 24px;
+        font-size: 0.95rem;
+      }
+
+      .notice-box ul {
+        margin: 8px 0 0;
+        padding-left: 20px;
+      }
+
+      nav.tabs {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 12px;
+      }
+
+      .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 8px 16px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: var(--radius) var(--radius) 0 0;
+        transition: color 0.2s;
+      }
+
+      .tab-btn.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--primary);
+        margin-bottom: -14px;
+      }
+
+      .tab-btn:hover:not(.active) {
+        color: var(--text-main);
+      }
+
+      article.card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .stat-item {
+        background-color: #f1f5f9;
+        padding: 16px;
+        border-radius: var(--radius);
+        text-align: center;
+        border: 1px solid var(--border);
+      }
+
+      .stat-item h4 {
+        margin: 0 0 8px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .stat-item p {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--primary);
+      }
+
+      label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+      }
+
+      button {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      button:hover {
+        background-color: var(--primary-hover);
+      }
+
+      button.btn-outline {
+        background-color: transparent;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+      }
+
+      button.btn-outline:hover {
+        background-color: #eff6ff;
+      }
+
+      button.btn-danger {
+        background-color: var(--danger);
+      }
+
+      button.btn-danger:hover {
+        background-color: #b91c1c;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--border);
+        padding: 12px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f8fafc;
+        font-weight: 700;
+        color: var(--text-muted);
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .badge-error {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-neutral {
+        background-color: #f1f5f9;
+        color: #475569;
+      }
+
+      #toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #334155;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+
+      #toast.show {
+        opacity: 1;
+      }
+
+      .code-block {
+        background-color: #1e293b;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: var(--radius);
+        font-family: monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+        margin-bottom: 16px;
+      }
+
+      .action-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+        align-items: center;
+      }
+
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+      .mt-4 {
+        margin-top: 16px;
+      }
+      .mb-4 {
+        margin-bottom: 16px;
+      }
+
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>메타엠 GOC2 연차 확인 시스템</h1>
+
+    <div class="notice-box">
+      <strong>[안내]</strong> 본 시스템은 Supabase 공용 DB를 기반으로 작동합니다.
+      <ul>
+        <li>같은 Supabase 프로젝트에 연결하면 어느 브라우저/PC에서도 동일한 데이터를 확인할 수 있습니다.</li>
+        <li><strong>최초 1회 Supabase URL 및 Anon Key 설정이 필수입니다. (설정 탭 참고)</strong></li>
+        <li>
+          관리자 비밀번호(801300)는 프론트엔드 레벨의 잠금이므로, 실제 데이터 보안은 Supabase RLS 정책으로 보완해야
+          합니다.
+        </li>
+      </ul>
+    </div>
+
+    <nav class="tabs" id="mainTabs">
+      <button class="tab-btn active" data-target="sec-employee">직원 연차 조회</button>
+      <button class="tab-btn" data-target="sec-admin">관리자 페이지</button>
+      <button class="tab-btn" data-target="sec-settings">Supabase 설정</button>
+    </nav>
+
+    <div id="toast">메시지</div>
+
+    <!-- 1. 직원 조회 섹션 -->
+    <section id="sec-employee" class="tab-content">
+      <article class="card">
+        <h3>본인 연차 조회</h3>
+        <form id="frm-search">
+          <div class="grid-2">
+            <div>
+              <label>이름</label>
+              <input type="text" id="search-name" placeholder="예: 홍길동" required />
+            </div>
+            <div>
+              <label>사번</label>
+              <input type="text" id="search-empno" placeholder="예: GOC20001" maxlength="30" required />
+            </div>
+          </div>
+          <button type="submit">조회하기</button>
+        </form>
+      </article>
+
+      <div id="search-result" class="hidden">
+        <article class="card">
+          <h3 id="res-emp-name" class="text-center mb-4">홍길동 님의 연차 현황</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <h4>총 연차</h4>
+              <p id="res-total">0일</p>
+            </div>
+            <div class="stat-item">
+              <h4>사용 연차</h4>
+              <p id="res-used">0일</p>
+            </div>
+            <div class="stat-item">
+              <h4>잔여 연차</h4>
+              <p id="res-remain">0일</p>
+            </div>
+          </div>
+
+          <h4>연차 사용 내역</h4>
+          <div class="table-container">
+            <table id="tbl-res-history">
+              <thead>
+                <tr>
+                  <th>사용일</th>
+                  <th>종류</th>
+                  <th>차감일수</th>
+                  <th>사유</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
       </div>
     </section>
 
-    <section class="card">
-      <div id="message" class="message hidden"></div>
-      <form id="searchForm" class="grid-2">
-        <div>
-          <label for="name">이름</label>
-          <input id="name" type="text" placeholder="예: 홍길동" required />
+    <!-- 2. 관리자 섹션 -->
+    <section id="sec-admin" class="tab-content hidden">
+      <!-- 로그인 게이트 -->
+      <article class="card" id="admin-gate">
+        <h3>관리자 로그인</h3>
+        <p>관리자 기능을 사용하려면 비밀번호를 입력하세요.</p>
+        <form id="frm-admin-login">
+          <label>비밀번호</label>
+          <input type="password" id="admin-pwd" placeholder="비밀번호 입력" required />
+          <button type="submit">접속</button>
+        </form>
+      </article>
+
+      <!-- 관리자 대시보드 -->
+      <div id="admin-dashboard" class="hidden">
+        <div class="flex-between mb-4">
+          <h2>관리자 대시보드</h2>
+          <button id="btn-logout" class="btn-outline">로그아웃</button>
         </div>
-        <div>
-          <label for="rrnFront">주민등록번호 앞자리</label>
-          <input id="rrnFront" type="password" maxlength="6" placeholder="생년월일 6자리" required />
+
+        <!-- 데이터 연동/엑셀 -->
+        <article class="card">
+          <h3>데이터 관리 (엑셀 / JSON / 초기화)</h3>
+
+          <div class="action-row">
+            <button id="btn-import-excel" class="btn-outline">엑셀 가져오기</button>
+            <input type="file" id="file-excel" accept=".xlsx, .xls, .csv" class="hidden" />
+            <button id="btn-export-excel" class="btn-outline">현재 데이터 엑셀 내보내기</button>
+            <button id="btn-dl-template" class="btn-outline">엑셀 템플릿 다운로드</button>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label>엑셀 가져오기 모드</label>
+              <select id="sel-import-mode">
+                <option value="merge">기존 데이터 유지 + 병합</option>
+                <option value="replace">전체 덮어쓰기 (기존 데이터 삭제)</option>
+              </select>
+            </div>
+          </div>
+
+          <hr />
+
+          <label>JSON 백업 데이터</label>
+          <textarea
+            id="txt-json"
+            rows="4"
+            placeholder="JSON 데이터를 이곳에 붙여넣어 복원하거나 내보내기 하세요."
+          ></textarea>
+          <div class="action-row">
+            <button id="btn-export-json" class="btn-outline">JSON 내보내기</button>
+            <button id="btn-import-json" class="btn-outline">JSON 복원하기</button>
+            <button id="btn-reset-sample" class="btn-danger">샘플 데이터 초기화 (DB 삽입)</button>
+          </div>
+        </article>
+
+        <div class="grid-2">
+          <!-- 직원 등록 -->
+          <article class="card">
+            <h3>직원 등록 / 수정</h3>
+            <form id="frm-emp">
+              <input type="hidden" id="emp-id" />
+              <label>이름</label>
+              <input type="text" id="emp-name" required />
+
+              <label>사번</label>
+              <input type="text" id="emp-no" maxlength="30" placeholder="예: GOC20001" required />
+
+              <label>부서</label>
+              <input type="text" id="emp-dept" />
+
+              <label>입사일</label>
+              <input type="date" id="emp-hire" />
+
+              <label>총 연차</label>
+              <input type="number" id="emp-total" step="0.5" value="15" required />
+
+              <div class="action-row mt-4">
+                <button type="submit">직원 저장</button>
+                <button type="button" id="btn-emp-clear" class="btn-outline">입력 초기화</button>
+              </div>
+            </form>
+          </article>
+
+          <!-- 내역 등록 -->
+          <article class="card">
+            <h3>연차 내역 등록</h3>
+            <form id="frm-hist">
+              <label>직원 선택</label>
+              <select id="hist-emp-sel" required></select>
+
+              <label>사용일</label>
+              <input type="date" id="hist-date" required />
+
+              <label>연차 종류</label>
+              <select id="hist-type" required>
+                <option value="일반 연차">일반 연차 (1일 차감)</option>
+                <option value="반일 연차">반일 연차 (0.5일 차감)</option>
+                <option value="생일 연차">생일 연차 (차감 없음)</option>
+                <option value="공가 연차">공가 연차 (차감 없음)</option>
+              </select>
+
+              <label>사유</label>
+              <input type="text" id="hist-reason" />
+
+              <div class="mt-4">
+                <button type="submit">내역 저장</button>
+              </div>
+            </form>
+          </article>
         </div>
-        <div class="button-row">
-          <button type="submit">조회하기</button>
-        </div>
-      </form>
-      <p class="note">이 버전은 순수 HTML + JS 방식이며, 데이터는 브라우저 localStorage에 저장됩니다. 일반 연차는 1일, 반일 연차는 0.5일 차감되며 생일 연차와 공가 연차는 차감되지 않습니다.</p>
+
+        <!-- 직원 목록 -->
+        <article class="card">
+          <h3>등록된 직원 목록</h3>
+          <div class="table-container">
+            <table id="tbl-admin-emp">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>사번</th>
+                  <th>부서</th>
+                  <th>입사일</th>
+                  <th>총 연차</th>
+                  <th>사용/잔여</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <!-- 내역 목록 -->
+        <article class="card">
+          <h3>연차 사용 내역 목록</h3>
+          <div class="table-container">
+            <table id="tbl-admin-hist">
+              <thead>
+                <tr>
+                  <th>직원이름</th>
+                  <th>사용일</th>
+                  <th>종류</th>
+                  <th>차감일수</th>
+                  <th>사유</th>
+                  <th>삭제</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
     </section>
 
-    <section id="resultSection" class="hidden">
-      <section class="card">
-        <div class="grid-3">
-          <div class="stat"><div class="label">총 연차</div><div class="value" id="totalLeave">0일</div></div>
-          <div class="stat"><div class="label">사용 연차</div><div class="value" id="usedLeave">0일</div></div>
-          <div class="stat"><div class="label">잔여 연차</div><div class="value" id="remainingLeave">0일</div></div>
-        </div>
-      </section>
+    <!-- 3. Supabase 설정 섹션 -->
+    <section id="sec-settings" class="tab-content hidden">
+      <article class="card">
+        <h3>Supabase 연결 설정</h3>
+        <p>
+          본 시스템을 사용하려면 Supabase 프로젝트의 URL과 Anon Key를 입력해야 합니다.<br />(입력한 정보는 현재
+          브라우저의 localStorage에만 저장됩니다.)
+        </p>
 
-      <section class="card">
-        <div class="topbar">
-          <h2>직원 정보</h2>
-          <span class="badge" id="historyCount">0건</span>
+        <div class="flex-between mb-4">
+          <span>현재 상태: <span id="badge-supa-status" class="badge badge-neutral">미설정</span></span>
         </div>
-        <div class="grid-3">
-          <div class="stat"><div class="label">이름</div><div class="value" id="employeeName" style="font-size:22px;">-</div></div>
-          <div class="stat"><div class="label">부서</div><div class="value" id="employeeDepartment" style="font-size:22px;">-</div></div>
-          <div class="stat"><div class="label">입사일</div><div class="value" id="employeeHireDate" style="font-size:22px;">-</div></div>
-        </div>
-      </section>
 
-      <section class="card">
-        <h2>연차 사용 내역</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>사용일</th><th>종류</th><th>차감일수</th><th>사유</th></tr>
-            </thead>
-            <tbody id="historyBody"><tr><td colspan="4">조회 결과가 없습니다.</td></tr></tbody>
-          </table>
+        <form id="frm-supa">
+          <label>Supabase Project URL</label>
+          <input type="url" id="supa-url" placeholder="https://xxxx.supabase.co" required />
+
+          <label>Supabase Anon Key</label>
+          <input type="text" id="supa-key" placeholder="eyJhbG..." required />
+
+          <div class="action-row mt-4">
+            <button type="submit">저장 및 연결 테스트</button>
+            <button type="button" id="btn-supa-clear" class="btn-danger">설정 초기화</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card">
+        <h3>Supabase 초기 설정 안내 (SQL)</h3>
+        <p>Supabase 프로젝트의 SQL Editor에서 아래 코드를 실행하여 테이블을 생성하세요.</p>
+
+        <div class="code-block">
+          -- 1. 직원 테이블 생성 CREATE TABLE public.employees ( id uuid primary key default gen_random_uuid(), name
+          text not null, employee_no text not null, department text, hire_date date, annual_leave_total numeric default
+          15, created_at timestamptz default now(), unique(employee_no) ); -- 2. 연차 내역 테이블 생성 CREATE TABLE
+          public.leave_histories ( id uuid primary key default gen_random_uuid(), employee_id uuid references
+          public.employees(id) on delete cascade, leave_date date not null, leave_type text not null, days_used numeric
+          default 0, reason text, created_at timestamptz default now() ); -- (선택) 외부에서 접근 가능하도록 RLS 정책
+          설정 임시 허용 (테스트용) -- 실제 운영 시에는 적절한 RLS 정책을 추가해야 합니다. ALTER TABLE public.employees
+          DISABLE ROW LEVEL SECURITY; ALTER TABLE public.leave_histories DISABLE ROW LEVEL SECURITY;
         </div>
-      </section>
+      </article>
     </section>
-  </div>
 
-  <script src="storage.js"></script>
-  <script>
-    LeaveStore.seedStoreIfNeeded();
-    const form = document.getElementById('searchForm');
-    const resultSection = document.getElementById('resultSection');
-    const messageBox = document.getElementById('message');
-    const historyBody = document.getElementById('historyBody');
+    <article class="card" style="background-color: #f8fafc; border: none; box-shadow: none">
+      <h4>빠른 사용 순서</h4>
+      <ol style="margin: 0; padding-left: 20px; font-size: 0.95rem">
+        <li>
+          <strong>Supabase 설정 탭</strong>으로 이동하여 SQL 코드를 실행하고, 발급받은 URL/Key를 입력 후 저장합니다.
+        </li>
+        <li><strong>관리자 페이지 탭</strong>으로 이동하여 비밀번호(<strong>801300</strong>)를 입력합니다.</li>
+        <li>직원 정보와 연차 내역을 직접 등록하거나, <strong>엑셀 가져오기</strong>를 통해 일괄 등록합니다.</li>
+        <li>
+          <strong>직원 연차 조회 탭</strong>에서 이름과 사번을 입력하여 정상적으로 내역이 뜨는지 확인합니다.
+        </li>
+      </ol>
+    </article>
 
-    function showMessage(text, type) {
-      messageBox.textContent = text;
-      messageBox.className = 'message ' + type;
-    }
-    function hideMessage() {
-      messageBox.className = 'message hidden';
-      messageBox.textContent = '';
-    }
-    function setText(id, value) {
-      document.getElementById(id).textContent = value;
-    }
+    <!-- Javascript 로직 -->
+    <script>
+      /* --------------------------------------------------------
+       1. 상수 및 상태
+    -------------------------------------------------------- */
+      const ADMIN_PWD = '801300';
 
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      hideMessage();
-      resultSection.classList.add('hidden');
+      // 연차 규칙 정의
+      const LEAVE_RULES = {
+        '일반 연차': 1,
+        '반일 연차': 0.5,
+        '생일 연차': 0,
+        '공가 연차': 0,
+      };
 
-      const name = document.getElementById('name').value.trim();
-      const rrnFront = document.getElementById('rrnFront').value.trim();
-      if (!name || !rrnFront) return showMessage('이름과 주민등록번호 앞자리를 입력해주세요.', 'error');
-      if (!/^\d{6}$/.test(rrnFront)) return showMessage('주민등록번호 앞자리는 숫자 6자리여야 합니다.', 'error');
+      // 구버전 및 혼용 명칭 호환성
+      const LEAVE_ALIAS = {
+        연차: '일반 연차',
+        반차: '반일 연차',
+        공가: '공가 연차',
+      };
 
-      const store = LeaveStore.loadStore();
-      const employee = LeaveStore.findEmployee(name, rrnFront, store);
-      if (!employee) return showMessage('일치하는 직원 정보가 없습니다.', 'error');
+      let supaClient = null;
+      let isAdminAuth = false;
 
-      const summary = LeaveStore.getEmployeeSummary(store, employee);
-      const history = LeaveStore.getHistoriesByEmployeeId(employee.id, store);
+      // 인메모리 캐시 (관리자/조회용)
+      let state = {
+        employees: [],
+        histories: [],
+      };
 
-      setText('totalLeave', summary.annualLeaveTotal + '일');
-      setText('usedLeave', summary.annualLeaveUsed + '일');
-      setText('remainingLeave', summary.annualLeaveRemaining + '일');
-      setText('employeeName', summary.name || '-');
-      setText('employeeDepartment', summary.department || '-');
-      setText('employeeHireDate', summary.hireDate || '-');
-      setText('historyCount', history.length + '건');
+      /* --------------------------------------------------------
+       2. 유틸 함수
+    -------------------------------------------------------- */
+      function showToast(msg, isError = false) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.backgroundColor = isError ? '#dc2626' : '#334155';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+      }
 
-      historyBody.innerHTML = history.length ? history.map(function (item) {
-        return '<tr><td>' + (item.leaveDate || '-') + '</td><td>' + (item.leaveType || '-') + '</td><td>' + Number(item.daysUsed || 0) + '일</td><td>' + (item.reason || '-') + '</td></tr>';
-      }).join('') : '<tr><td colspan="4">사용 내역이 없습니다.</td></tr>';
+      function getNormalizedLeaveType(raw) {
+        const type = String(raw).trim();
+        if (LEAVE_RULES[type] !== undefined) return type;
+        if (LEAVE_ALIAS[type] !== undefined) return LEAVE_ALIAS[type];
+        return '일반 연차'; // 기본값
+      }
 
-      resultSection.classList.remove('hidden');
-      showMessage('연차 정보를 조회했습니다.', 'success');
-    });
-  </script>
+      function getDaysUsed(type) {
+        return LEAVE_RULES[getNormalizedLeaveType(type)] || 0;
+      }
+
+      function switchTab(targetId) {
+        document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach((el) => el.classList.remove('active'));
+
+        document.getElementById(targetId).classList.remove('hidden');
+        document.querySelector(`[data-target="${targetId}"]`).classList.add('active');
+      }
+
+      /* --------------------------------------------------------
+       3. Supabase 설정 함수
+    -------------------------------------------------------- */
+      function initSupabase() {
+        const url = localStorage.getItem('goc2_supa_url');
+        const key = localStorage.getItem('goc2_supa_key');
+
+        if (url && key) {
+          document.getElementById('supa-url').value = url;
+          document.getElementById('supa-key').value = key;
+          supaClient = window.supabase.createClient(url, key);
+          checkSupaConnection();
+        } else {
+          updateSupaBadge(false, '미설정');
+        }
+      }
+
+      function updateSupaBadge(isOk, text) {
+        const badge = document.getElementById('badge-supa-status');
+        badge.textContent = text;
+        badge.className = 'badge ' + (isOk ? 'badge-success' : 'badge-error');
+      }
+
+      async function checkSupaConnection() {
+        if (!supaClient) return;
+        try {
+          const { error } = await supaClient.from('employees').select('id').limit(1);
+          if (error) throw error;
+          updateSupaBadge(true, '연결 성공');
+        } catch (err) {
+          console.error(err);
+          updateSupaBadge(false, '연결 실패 (테이블 확인 요망)');
+          supaClient = null;
+        }
+      }
+
+      async function handleSupaSave(e) {
+        e.preventDefault();
+        const url = document.getElementById('supa-url').value.trim();
+        const key = document.getElementById('supa-key').value.trim();
+
+        localStorage.setItem('goc2_supa_url', url);
+        localStorage.setItem('goc2_supa_key', key);
+
+        supaClient = window.supabase.createClient(url, key);
+        await checkSupaConnection();
+        if (supaClient) showToast('Supabase 설정이 저장되었습니다.');
+      }
+
+      function handleSupaClear() {
+        localStorage.removeItem('goc2_supa_url');
+        localStorage.removeItem('goc2_supa_key');
+        document.getElementById('supa-url').value = '';
+        document.getElementById('supa-key').value = '';
+        supaClient = null;
+        updateSupaBadge(false, '미설정');
+        showToast('설정이 초기화되었습니다.');
+      }
+
+      /* --------------------------------------------------------
+       4. 직원 조회 함수
+    -------------------------------------------------------- */
+      async function searchEmployee(e) {
+        e.preventDefault();
+        if (!supaClient) return showToast('Supabase 설정이 필요합니다.', true);
+
+        const name = document.getElementById('search-name').value.trim();
+        const employeeNo = document.getElementById('search-empno').value.trim();
+        const resBox = document.getElementById('search-result');
+
+        try {
+          // 직원 조회
+          const { data: emps, error: err1 } = await supaClient
+            .from('employees')
+            .select('*')
+            .eq('name', name)
+            .eq('employee_no', employeeNo);
+
+          if (err1) throw err1;
+          if (!emps || emps.length === 0) {
+            resBox.classList.add('hidden');
+            return showToast('일치하는 직원 정보가 없습니다.', true);
+          }
+
+          const emp = emps[0];
+
+          // 내역 조회
+          const { data: hists, error: err2 } = await supaClient
+            .from('leave_histories')
+            .select('*')
+            .eq('employee_id', emp.id)
+            .order('leave_date', { ascending: false });
+
+          if (err2) throw err2;
+
+          const total = parseFloat(emp.annual_leave_total) || 0;
+          const used = hists.reduce((acc, curr) => acc + (parseFloat(curr.days_used) || 0), 0);
+          const remain = total - used;
+
+          document.getElementById('res-emp-name').textContent = `${emp.name} 님의 연차 현황`;
+          document.getElementById('res-total').textContent = `${total}일`;
+          document.getElementById('res-used').textContent = `${used}일`;
+          document.getElementById('res-remain').textContent = `${remain}일`;
+
+          const tbody = document.querySelector('#tbl-res-history tbody');
+          tbody.innerHTML = '';
+          if (hists.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">사용 내역이 없습니다.</td></tr>';
+          } else {
+            hists.forEach((h) => {
+              tbody.innerHTML += `
+              <tr>
+                <td>${h.leave_date}</td>
+                <td>${h.leave_type}</td>
+                <td>${h.days_used}일</td>
+                <td>${h.reason || '-'}</td>
+              </tr>
+            `;
+            });
+          }
+          resBox.classList.remove('hidden');
+          showToast('조회 완료');
+        } catch (err) {
+          console.error(err);
+          showToast('조회 중 오류가 발생했습니다.', true);
+        }
+      }
+
+      /* --------------------------------------------------------
+       5. 관리자 CRUD & 렌더링 함수
+    -------------------------------------------------------- */
+      function handleAdminLogin(e) {
+        e.preventDefault();
+        const pwd = document.getElementById('admin-pwd').value;
+        if (pwd === ADMIN_PWD) {
+          if (!supaClient) return showToast('먼저 Supabase 설정을 완료해주세요.', true);
+          isAdminAuth = true;
+          document.getElementById('admin-gate').classList.add('hidden');
+          document.getElementById('admin-dashboard').classList.remove('hidden');
+          document.getElementById('admin-pwd').value = '';
+          loadAdminData();
+          showToast('관리자 인증 성공');
+        } else {
+          showToast('비밀번호가 일치하지 않습니다.', true);
+        }
+      }
+
+      function handleAdminLogout() {
+        isAdminAuth = false;
+        document.getElementById('admin-gate').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+        showToast('로그아웃 되었습니다.');
+      }
+
+      async function loadAdminData() {
+        if (!supaClient || !isAdminAuth) return;
+        try {
+          const [empRes, histRes] = await Promise.all([
+            supaClient.from('employees').select('*').order('name'),
+            supaClient.from('leave_histories').select('*, employees(name)').order('leave_date', { ascending: false }),
+          ]);
+
+          if (empRes.error) throw empRes.error;
+          if (histRes.error) throw histRes.error;
+
+          state.employees = empRes.data || [];
+          state.histories = histRes.data || [];
+
+          renderAdminTables();
+          renderAdminSelects();
+        } catch (err) {
+          console.error(err);
+          showToast('데이터 로드 실패', true);
+        }
+      }
+
+      function renderAdminSelects() {
+        const sel = document.getElementById('hist-emp-sel');
+        sel.innerHTML = '<option value="">직원을 선택하세요</option>';
+        state.employees.forEach((e) => {
+          sel.innerHTML += `<option value="${e.id}">${e.name} (${e.employee_no})</option>`;
+        });
+      }
+
+      function renderAdminTables() {
+        // 직원 테이블
+        const tEmp = document.querySelector('#tbl-admin-emp tbody');
+        tEmp.innerHTML = '';
+        state.employees.forEach((e) => {
+          const used = state.histories
+            .filter((h) => h.employee_id === e.id)
+            .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
+          const total = parseFloat(e.annual_leave_total || 0);
+
+          tEmp.innerHTML += `
+          <tr>
+            <td>${e.name}</td>
+            <td>${e.employee_no}</td>
+            <td>${e.department || '-'}</td>
+            <td>${e.hire_date || '-'}</td>
+            <td>${total}</td>
+            <td>${used} / ${total - used}</td>
+            <td>
+              <button class="btn-outline" style="padding:4px 8px; font-size:0.8rem;" onclick="editEmp('${e.id}')">수정</button>
+              <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="delEmp('${e.id}')">삭제</button>
+            </td>
+          </tr>
+        `;
+        });
+
+        // 내역 테이블
+        const tHist = document.querySelector('#tbl-admin-hist tbody');
+        tHist.innerHTML = '';
+        state.histories.forEach((h) => {
+          const empName = h.employees ? h.employees.name : '알수없음';
+          tHist.innerHTML += `
+          <tr>
+            <td>${empName}</td>
+            <td>${h.leave_date}</td>
+            <td>${h.leave_type}</td>
+            <td>${h.days_used}</td>
+            <td>${h.reason || '-'}</td>
+            <td>
+              <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="delHist('${h.id}')">삭제</button>
+            </td>
+          </tr>
+        `;
+        });
+      }
+
+      async function saveEmployee(e) {
+        e.preventDefault();
+        const id = document.getElementById('emp-id').value;
+        const payload = {
+          name: document.getElementById('emp-name').value.trim(),
+          employee_no: document.getElementById('emp-no').value.trim(),
+          department: document.getElementById('emp-dept').value.trim(),
+          hire_date: document.getElementById('emp-hire').value || null,
+          annual_leave_total: parseFloat(document.getElementById('emp-total').value) || 0,
+        };
+
+        try {
+          if (id) {
+            // Update
+            const { error } = await supaClient.from('employees').update(payload).eq('id', id);
+            if (error) throw error;
+            showToast('직원 정보 수정 완료');
+          } else {
+            // Insert
+            // check duplicate
+            const exists = state.employees.find((x) => x.employee_no === payload.employee_no && x.id !== id);
+            if (exists) return showToast('이미 존재하는 사번입니다.', true);
+
+            const { error } = await supaClient.from('employees').insert([payload]);
+            if (error) throw error;
+            showToast('직원 정보 등록 완료');
+          }
+          document.getElementById('btn-emp-clear').click();
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('저장 중 오류 발생 (고유키 위반 등)', true);
+        }
+      }
+
+      window.editEmp = (id) => {
+        const emp = state.employees.find((x) => x.id === id);
+        if (!emp) return;
+        document.getElementById('emp-id').value = emp.id;
+        document.getElementById('emp-name').value = emp.name;
+        document.getElementById('emp-no').value = emp.employee_no;
+        document.getElementById('emp-dept').value = emp.department || '';
+        document.getElementById('emp-hire').value = emp.hire_date || '';
+        document.getElementById('emp-total').value = emp.annual_leave_total;
+      };
+
+      document.getElementById('btn-emp-clear').addEventListener('click', () => {
+        document.getElementById('emp-id').value = '';
+        document.getElementById('frm-emp').reset();
+        document.getElementById('emp-total').value = '15';
+      });
+
+      window.delEmp = async (id) => {
+        if (!confirm('직원과 관련된 연차 내역이 모두 삭제됩니다. 계속하시겠습니까?')) return;
+        try {
+          const { error } = await supaClient.from('employees').delete().eq('id', id);
+          if (error) throw error;
+          showToast('삭제되었습니다.');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('삭제 실패', true);
+        }
+      };
+
+      async function saveHistory(e) {
+        e.preventDefault();
+        const typeRaw = document.getElementById('hist-type').value;
+        const typeNorm = getNormalizedLeaveType(typeRaw);
+
+        const payload = {
+          employee_id: document.getElementById('hist-emp-sel').value,
+          leave_date: document.getElementById('hist-date').value,
+          leave_type: typeNorm,
+          days_used: getDaysUsed(typeNorm),
+          reason: document.getElementById('hist-reason').value.trim(),
+        };
+
+        try {
+          const { error } = await supaClient.from('leave_histories').insert([payload]);
+          if (error) throw error;
+          showToast('연차 내역 등록 완료');
+          document.getElementById('frm-hist').reset();
+          document.getElementById('hist-type').value = '일반 연차';
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('내역 등록 실패', true);
+        }
+      }
+
+      window.delHist = async (id) => {
+        if (!confirm('이 사용 내역을 삭제하시겠습니까?')) return;
+        try {
+          const { error } = await supaClient.from('leave_histories').delete().eq('id', id);
+          if (error) throw error;
+          showToast('삭제되었습니다.');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('삭제 실패', true);
+        }
+      };
+
+      /* --------------------------------------------------------
+       6. JSON 및 Excel, 초기화 함수
+    -------------------------------------------------------- */
+      async function resetSampleData() {
+        if (!confirm('기존 데이터를 모두 지우고 샘플 데이터를 DB에 삽입합니다. 진행할까요?')) return;
+        try {
+          // 1. Delete all (using a dummy filter that is always true, because supabase requires filter)
+          await supaClient.from('leave_histories').delete().not('id', 'is', null);
+          await supaClient.from('employees').delete().not('id', 'is', null);
+
+          // 2. Insert Samples
+          const sampleEmps = [
+            {
+              name: '홍길동',
+              employee_no: 'GOC20001',
+              department: '개발팀',
+              hire_date: '2021-03-02',
+              annual_leave_total: 15,
+            },
+            {
+              name: '김영희',
+              employee_no: 'GOC20002',
+              department: '인사팀',
+              hire_date: '2022-01-10',
+              annual_leave_total: 15,
+            },
+          ];
+          const { data: insertedEmps, error: eErr } = await supaClient.from('employees').insert(sampleEmps).select();
+          if (eErr) throw eErr;
+
+          const idMap = {};
+          insertedEmps.forEach((e) => {
+            idMap[e.name] = e.id;
+          });
+
+          const sampleHists = [
+            {
+              employee_id: idMap['홍길동'],
+              leave_date: '2023-05-10',
+              leave_type: '일반 연차',
+              days_used: 1,
+              reason: '개인사정',
+            },
+            {
+              employee_id: idMap['홍길동'],
+              leave_date: '2023-08-14',
+              leave_type: '반일 연차',
+              days_used: 0.5,
+              reason: '병원',
+            },
+            {
+              employee_id: idMap['김영희'],
+              leave_date: '2023-10-20',
+              leave_type: '생일 연차',
+              days_used: 0,
+              reason: '생일',
+            },
+          ];
+
+          const { error: hErr } = await supaClient.from('leave_histories').insert(sampleHists);
+          if (hErr) throw hErr;
+
+          showToast('샘플 데이터 삽입 완료');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('샘플 데이터 초기화 중 오류', true);
+        }
+      }
+
+      async function handleExportJson() {
+        const data = {
+          employees: state.employees,
+          histories: state.histories,
+        };
+        document.getElementById('txt-json').value = JSON.stringify(data, null, 2);
+        showToast('JSON 내보내기 완료. 텍스트를 복사하세요.');
+      }
+
+      async function handleImportJson() {
+        const txt = document.getElementById('txt-json').value.trim();
+        if (!txt) return showToast('입력된 JSON이 없습니다.', true);
+
+        try {
+          const data = JSON.parse(txt);
+          if (!data.employees || !data.histories) throw new Error('유효하지 않은 형식');
+
+          if (!confirm('현재 데이터를 전부 삭제하고 JSON 데이터를 덮어씁니다 (Replace 모드 적용). 계속할까요?')) return;
+
+          await supaClient.from('leave_histories').delete().not('id', 'is', null);
+          await supaClient.from('employees').delete().not('id', 'is', null);
+
+          // Remove IDs for fresh insert
+          const newEmps = data.employees.map((e) => ({
+            name: e.name,
+            employee_no: e.employee_no || e.rrn_front,
+            department: e.department,
+            hire_date: e.hire_date,
+            annual_leave_total: e.annual_leave_total,
+          }));
+
+          const { data: insertedEmps, error: errE } = await supaClient.from('employees').insert(newEmps).select();
+          if (errE) throw errE;
+
+          // Build mapping
+          const oldToNewId = {};
+          data.employees.forEach((oldE) => {
+            const oldEmployeeNo = oldE.employee_no || oldE.rrn_front;
+            const match = insertedEmps.find((n) => n.name === oldE.name && n.employee_no === oldEmployeeNo);
+            if (match) oldToNewId[oldE.id] = match.id;
+          });
+
+          const newHists = [];
+          data.histories.forEach((h) => {
+            if (oldToNewId[h.employee_id]) {
+              newHists.push({
+                employee_id: oldToNewId[h.employee_id],
+                leave_date: h.leave_date,
+                leave_type: h.leave_type,
+                days_used: h.days_used,
+                reason: h.reason,
+              });
+            }
+          });
+
+          if (newHists.length > 0) {
+            const { error: errH } = await supaClient.from('leave_histories').insert(newHists);
+            if (errH) throw errH;
+          }
+
+          document.getElementById('txt-json').value = '';
+          showToast('JSON 데이터 복원 완료');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('JSON 처리 오류. 포맷을 확인하세요.', true);
+        }
+      }
+
+      function downloadTemplate() {
+        const wb = XLSX.utils.book_new();
+        const wsEmp = XLSX.utils.json_to_sheet([
+          { name: '홍길동', employeeNo: 'GOC20001', department: '개발팀', hireDate: '2023-01-01', annualLeaveTotal: 15 },
+        ]);
+        const wsHis = XLSX.utils.json_to_sheet([
+          { name: '홍길동', employeeNo: 'GOC20001', leaveDate: '2023-05-10', leaveType: '일반 연차', reason: '개인사정' },
+        ]);
+        XLSX.utils.book_append_sheet(wb, wsEmp, 'employees');
+        XLSX.utils.book_append_sheet(wb, wsHis, 'histories');
+        XLSX.writeFile(wb, 'leave_template.xlsx');
+      }
+
+      function exportExcel() {
+        const wb = XLSX.utils.book_new();
+        const emps = state.employees.map((e) => ({
+          name: e.name,
+          employeeNo: e.employee_no,
+          department: e.department,
+          hireDate: e.hire_date,
+          annualLeaveTotal: e.annual_leave_total,
+        }));
+        const hists = state.histories.map((h) => {
+          const emp = state.employees.find((x) => x.id === h.employee_id) || {};
+          return {
+            name: emp.name || '',
+            employeeNo: emp.employee_no || '',
+            leaveDate: h.leave_date,
+            leaveType: h.leave_type,
+            reason: h.reason,
+          };
+        });
+
+        const wsEmp = XLSX.utils.json_to_sheet(
+          emps.length ? emps : [{ name: '', employeeNo: '', department: '', hireDate: '', annualLeaveTotal: '' }],
+        );
+        const wsHis = XLSX.utils.json_to_sheet(
+          hists.length ? hists : [{ name: '', employeeNo: '', leaveDate: '', leaveType: '', reason: '' }],
+        );
+
+        XLSX.utils.book_append_sheet(wb, wsEmp, 'employees');
+        XLSX.utils.book_append_sheet(wb, wsHis, 'histories');
+        XLSX.writeFile(wb, `leave_data_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      }
+
+      function importExcel(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function (evt) {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+
+            if (!wb.Sheets['employees'] || !wb.Sheets['histories']) {
+              return showToast('employees 및 histories 시트가 필요합니다.', true);
+            }
+
+            const rawEmps = XLSX.utils.sheet_to_json(wb.Sheets['employees']);
+            const rawHists = XLSX.utils.sheet_to_json(wb.Sheets['histories']);
+            const mode = document.getElementById('sel-import-mode').value;
+
+            if (mode === 'replace') {
+              if (!confirm('기존 데이터를 모두 지우고 엑셀 데이터로 덮어씁니다. 계속할까요?')) return;
+              await supaClient.from('leave_histories').delete().not('id', 'is', null);
+              await supaClient.from('employees').delete().not('id', 'is', null);
+            }
+
+            // 1. Process Employees
+            for (const r of rawEmps) {
+              const employeeNo = String(r.employeeNo || r.rrnFront || '').trim();
+              if (!r.name || !employeeNo) continue;
+
+              const payload = {
+                name: r.name,
+                employee_no: employeeNo,
+                department: r.department || null,
+                hire_date: r.hireDate || null,
+                annual_leave_total: parseFloat(r.annualLeaveTotal) || 0,
+              };
+
+              // check exist (for merge mode)
+              const { data: ex } = await supaClient
+                .from('employees')
+                .select('id')
+                .eq('name', payload.name)
+                .eq('employee_no', payload.employee_no);
+
+              if (ex && ex.length > 0) {
+                if (mode === 'merge') {
+                  await supaClient.from('employees').update(payload).eq('id', ex[0].id);
+                }
+              } else {
+                await supaClient.from('employees').insert([payload]);
+              }
+            }
+
+            // Refresh emp list to get IDs
+            const { data: freshEmps } = await supaClient.from('employees').select('id, name, employee_no');
+
+            // 2. Process Histories
+            const hPayloads = [];
+            for (const r of rawHists) {
+              const employeeNo = String(r.employeeNo || r.rrnFront || '').trim();
+              if (!r.name || !employeeNo || !r.leaveDate) continue;
+              const emp = freshEmps.find((x) => x.name === r.name && x.employee_no === employeeNo);
+              if (!emp) continue;
+
+              const nType = getNormalizedLeaveType(r.leaveType);
+              hPayloads.push({
+                employee_id: emp.id,
+                leave_date: r.leaveDate,
+                leave_type: nType,
+                days_used: getDaysUsed(nType),
+                reason: r.reason || '',
+              });
+            }
+
+            if (hPayloads.length > 0) {
+              await supaClient.from('leave_histories').insert(hPayloads);
+            }
+
+            showToast('엑셀 가져오기 완료');
+            loadAdminData();
+          } catch (err) {
+            console.error(err);
+            showToast('엑셀 처리 중 오류 발생', true);
+          } finally {
+            e.target.value = ''; // clear input
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      /* --------------------------------------------------------
+       7. 이벤트 바인딩
+    -------------------------------------------------------- */
+      document.addEventListener('DOMContentLoaded', () => {
+        // 탭 전환
+        document.querySelectorAll('.tab-btn').forEach((btn) => {
+          btn.addEventListener('click', (e) => switchTab(e.target.dataset.target));
+        });
+
+        // Supabase 설정
+        initSupabase();
+        document.getElementById('frm-supa').addEventListener('submit', handleSupaSave);
+        document.getElementById('btn-supa-clear').addEventListener('click', handleSupaClear);
+
+        // 직원 조회
+        document.getElementById('frm-search').addEventListener('submit', searchEmployee);
+
+        // 관리자 게이트
+        document.getElementById('frm-admin-login').addEventListener('submit', handleAdminLogin);
+        document.getElementById('btn-logout').addEventListener('click', handleAdminLogout);
+
+        // 관리자 폼 저장
+        document.getElementById('frm-emp').addEventListener('submit', saveEmployee);
+        document.getElementById('frm-hist').addEventListener('submit', saveHistory);
+
+        // JSON, Excel, Data buttons
+        document.getElementById('btn-reset-sample').addEventListener('click', resetSampleData);
+        document.getElementById('btn-export-json').addEventListener('click', handleExportJson);
+        document.getElementById('btn-import-json').addEventListener('click', handleImportJson);
+
+        document.getElementById('btn-dl-template').addEventListener('click', downloadTemplate);
+        document.getElementById('btn-export-excel').addEventListener('click', exportExcel);
+        document
+          .getElementById('btn-import-excel')
+          .addEventListener('click', () => document.getElementById('file-excel').click());
+        document.getElementById('file-excel').addEventListener('change', importExcel);
+      });
+    </script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
