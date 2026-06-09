@@ -656,15 +656,48 @@
         return LEAVE_RULES[getNormalizedLeaveType(type)] || 0;
       }
 
-      function getExpireDate(hireDate) {
-        if (!hireDate) return '-';
-        const date = new Date(hireDate);
-        if (Number.isNaN(date.getTime())) return '-';
-        date.setDate(date.getDate() + 364);
+      function formatDateObject(date) {
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
         const dd = String(date.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
+      }
+
+      function normalizeDateValue(value) {
+        if (value === null || value === undefined || value === '') return '';
+
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+          excelEpoch.setUTCDate(excelEpoch.getUTCDate() + Math.floor(value));
+          return formatDateObject(excelEpoch);
+        }
+
+        const text = String(value).trim();
+        if (!text) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+        if (/^\d{4}\.\d{2}\.\d{2}$/.test(text)) return text.replace(/\./g, '-');
+        if (/^\d{4}\/\d{2}\/\d{2}$/.test(text)) return text.replace(/\//g, '-');
+        if (/^\d+(\.\d+)?$/.test(text)) {
+          const numeric = Number(text);
+          if (Number.isFinite(numeric)) {
+            const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+            excelEpoch.setUTCDate(excelEpoch.getUTCDate() + Math.floor(numeric));
+            return formatDateObject(excelEpoch);
+          }
+        }
+
+        const parsed = new Date(text);
+        if (!Number.isNaN(parsed.getTime())) return formatDateObject(parsed);
+        return text;
+      }
+
+      function getExpireDate(hireDate) {
+        const normalizedHireDate = normalizeDateValue(hireDate);
+        if (!normalizedHireDate) return '-';
+        const date = new Date(normalizedHireDate);
+        if (Number.isNaN(date.getTime())) return '-';
+        date.setDate(date.getDate() + 364);
+        return formatDateObject(date);
       }
 
       function switchTab(targetId) {
@@ -684,6 +717,14 @@
           try {
             const parsed = JSON.parse(stored);
             if (parsed.employees && parsed.histories) {
+              parsed.employees = parsed.employees.map((employee) => ({
+                ...employee,
+                hireDate: normalizeDateValue(employee.hireDate || employee.hire_date || ''),
+              }));
+              parsed.histories = parsed.histories.map((history) => ({
+                ...history,
+                leaveDate: normalizeDateValue(history.leaveDate || history.leave_date || ''),
+              }));
               appData = parsed;
             } else {
               throw new Error('Invalid format');
@@ -734,7 +775,7 @@
         const total = parseFloat(emp.annualLeaveTotal) || 0;
         const used = hists.reduce((acc, curr) => acc + (parseFloat(curr.daysUsed) || 0), 0);
         const remain = total - used;
-        const hireDate = emp.hireDate || '-';
+        const hireDate = normalizeDateValue(emp.hireDate) || '-';
         const expireDate = getExpireDate(emp.hireDate);
 
         document.getElementById('res-emp-name').textContent = `${emp.name} 님의 연차 현황`;
@@ -963,7 +1004,7 @@
             name: e.name,
             employeeNo: e.employeeNo || e.employee_no || e.rrn_front || e.rrnFront,
             department: e.department || e.dept || '',
-            hireDate: e.hireDate || e.hire_date || '',
+            hireDate: normalizeDateValue(e.hireDate || e.hire_date || ''),
             annualLeaveTotal: e.annualLeaveTotal || e.annual_leave_total || 0,
           }));
 
@@ -980,7 +1021,7 @@
               newHists.push({
                 id: generateId(),
                 employeeId: newEmpId,
-                leaveDate: h.leaveDate || h.leave_date,
+                leaveDate: normalizeDateValue(h.leaveDate || h.leave_date),
                 leaveType: typeNorm,
                 daysUsed: getDaysUsed(typeNorm),
                 reason: h.reason || '',
@@ -1092,7 +1133,7 @@
                 name: r.name,
                 employeeNo: empNo,
                 department: r.department || null,
-                hireDate: r.hireDate || null,
+                hireDate: normalizeDateValue(r.hireDate || r.hire_date || ''),
                 annualLeaveTotal: parseFloat(r.annualLeaveTotal || r.annual_leave_total) || 0,
               };
 
@@ -1122,7 +1163,7 @@
               newHists.push({
                 id: generateId(),
                 employeeId: emp.id,
-                leaveDate: r.leaveDate || r.leave_date,
+                leaveDate: normalizeDateValue(r.leaveDate || r.leave_date),
                 leaveType: nType,
                 daysUsed: getDaysUsed(nType),
                 reason: r.reason || '',
