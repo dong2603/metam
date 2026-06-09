@@ -386,7 +386,7 @@
           이 버전은 <strong>Supabase 공용 DB</strong>를 기반으로 작동하여 다른 브라우저/PC에서도 동일한 데이터를 확인할
           수 있습니다.
         </li>
-        <li><strong>최초 1회 Supabase URL 및 Anon Key 설정이 필수</strong>입니다. (Supabase 설정 탭)</li>
+        <li><strong>직원 조회는 이름과 사번만 입력하면 바로 조회</strong>할 수 있도록 공용 DB가 자동 연결되어 있습니다.</li>
         <li>직원 조회 기능은 누구나 공용으로 사용 가능합니다.</li>
         <li>
           관리자 비밀번호(801300)는 프론트엔드 레벨의 잠금입니다. 실제 운영 시 Supabase RLS/Auth 정책으로 관리자 쓰기
@@ -398,7 +398,6 @@
     <nav class="tabs" id="mainTabs">
       <button class="tab-btn active" data-target="sec-employee">직원 연차 조회</button>
       <button class="tab-btn" data-target="sec-admin">관리자 페이지</button>
-      <button class="tab-btn" data-target="sec-settings">Supabase 설정</button>
     </nav>
 
     <div id="toast">메시지</div>
@@ -735,8 +734,8 @@
        1. 상수 및 상태 관리
     ========================================================================== */
       const ADMIN_PWD = '801300';
-      const SUPA_URL_KEY = 'goc2_supa_url_v2';
-      const SUPA_KEY_KEY = 'goc2_supa_key_v2';
+      const AUTO_SUPA_URL = 'https://zqotgadtzciidafhofuh.supabase.co';
+      const AUTO_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxb3RnYWR0emNpaWRhZmhvZnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NjY2OTYsImV4cCI6MjA5NjU0MjY5Nn0.oSwDdPaeShwuQH_nOwoOm8RjSvyfcNqUHl1KABqpvVY';
 
       const LEAVE_RULES = {
         '일반 연차': 1,
@@ -840,16 +839,13 @@
        3. Supabase 설정 함수
     ========================================================================== */
       function initSupabase() {
-        const url = localStorage.getItem(SUPA_URL_KEY);
-        const key = localStorage.getItem(SUPA_KEY_KEY);
-
-        if (url && key) {
-          document.getElementById('supa-url').value = url;
-          document.getElementById('supa-key').value = key;
-          supaClient = window.supabase.createClient(url, key);
+        try {
+          supaClient = window.supabase.createClient(AUTO_SUPA_URL, AUTO_SUPA_KEY);
           checkSupaConnection();
-        } else {
-          updateSupaBadge(false, '미설정');
+        } catch (err) {
+          console.error('Supabase 자동 연결 에러:', err);
+          updateSupaBadge(false, '자동 연결 실패');
+          supaClient = null;
         }
       }
 
@@ -874,25 +870,11 @@
 
       async function handleSupaSave(e) {
         e.preventDefault();
-        const url = document.getElementById('supa-url').value.trim();
-        const key = document.getElementById('supa-key').value.trim();
-
-        localStorage.setItem(SUPA_URL_KEY, url);
-        localStorage.setItem(SUPA_KEY_KEY, key);
-
-        supaClient = window.supabase.createClient(url, key);
-        await checkSupaConnection();
-        if (supaClient) showToast('Supabase 설정이 저장되었습니다.', false);
+        showToast('이 버전은 Supabase가 자동 연결되어 있어 별도 설정이 필요 없습니다.');
       }
 
       function handleSupaClear() {
-        localStorage.removeItem(SUPA_URL_KEY);
-        localStorage.removeItem(SUPA_KEY_KEY);
-        document.getElementById('supa-url').value = '';
-        document.getElementById('supa-key').value = '';
-        supaClient = null;
-        updateSupaBadge(false, '미설정');
-        showToast('설정이 초기화되었습니다.');
+        showToast('이 버전은 고정된 공용 DB를 사용하므로 설정 초기화를 지원하지 않습니다.', true);
       }
 
       /* ==========================================================================
@@ -900,7 +882,7 @@
     ========================================================================== */
       async function searchEmployee(e) {
         e.preventDefault();
-        if (!supaClient) return showToast('Supabase 설정 탭에서 먼저 연결을 완료해주세요.', true);
+        if (!supaClient) return showToast('공용 DB 연결 상태를 확인해주세요.', true);
 
         const name = document.getElementById('search-name').value.trim();
         const employeeNo = document.getElementById('search-empno').value.trim();
