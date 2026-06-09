@@ -15,6 +15,8 @@
 
     <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
       :root {
@@ -26,11 +28,13 @@
         --primary-hover: #1d4ed8;
         --border: #e2e8f0;
         --danger: #dc2626;
+        --danger-hover: #b91c1c;
         --success: #16a34a;
         --warning: #f59e0b;
         --info-bg: #eff6ff;
         --info-border: #bfdbfe;
-        --radius: 8px;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
       }
 
       * {
@@ -38,10 +42,9 @@
       }
 
       body {
-        max-width: 880px;
+        max-width: 900px;
         margin: 0 auto;
-        padding: 32px 20px;
-        position: relative;
+        padding: 32px 20px 60px;
         font-family: 'Noto Sans KR', sans-serif;
         background-color: var(--bg-color);
         color: var(--text-main);
@@ -62,6 +65,7 @@
         margin-top: 0;
         margin-bottom: 16px;
         font-weight: 700;
+        color: #1e293b;
       }
 
       p {
@@ -69,6 +73,7 @@
         margin-bottom: 16px;
       }
 
+      /* Notice Box */
       .notice-box {
         background-color: var(--info-bg);
         border: 1px solid var(--info-border);
@@ -76,13 +81,20 @@
         border-radius: var(--radius);
         margin-bottom: 24px;
         font-size: 0.95rem;
+        color: #1e3a8a;
       }
-
+      .notice-box strong {
+        color: #1e40af;
+      }
       .notice-box ul {
         margin: 8px 0 0;
         padding-left: 20px;
       }
+      .notice-box li {
+        margin-bottom: 4px;
+      }
 
+      /* Tabs */
       nav.tabs {
         display: flex;
         justify-content: center;
@@ -90,12 +102,13 @@
         margin-bottom: 24px;
         border-bottom: 2px solid var(--border);
         padding-bottom: 12px;
+        flex-wrap: wrap;
       }
 
       .tab-btn {
         background: transparent;
         border: none;
-        padding: 8px 16px;
+        padding: 10px 20px;
         font-size: 1rem;
         font-weight: 700;
         color: var(--text-muted);
@@ -109,22 +122,24 @@
       .tab-btn.active {
         color: var(--primary);
         border-bottom: 3px solid var(--primary);
-        margin-bottom: -14px;
+        margin-bottom: -15px; /* overlap border */
       }
 
       .tab-btn:hover:not(.active) {
         color: var(--text-main);
       }
 
+      /* Cards */
       article.card {
         background-color: var(--card-bg);
         border: 1px solid var(--border);
         border-radius: var(--radius);
         padding: 24px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow);
       }
 
+      /* Grids */
       .grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -133,7 +148,7 @@
 
       .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
         gap: 16px;
         margin-bottom: 24px;
       }
@@ -145,37 +160,40 @@
         text-align: center;
         border: 1px solid var(--border);
       }
-
       .stat-item h4 {
         margin: 0 0 8px;
         font-size: 0.9rem;
         color: var(--text-muted);
       }
-
       .stat-item p {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 800;
         color: var(--primary);
       }
 
+      /* Forms */
       label {
         display: block;
-        font-weight: 500;
+        font-weight: 600;
         margin-bottom: 6px;
         font-size: 0.95rem;
+        color: #334155;
       }
 
       input,
       select,
       textarea {
         width: 100%;
-        padding: 10px 12px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
         font-family: inherit;
         font-size: 0.95rem;
         margin-bottom: 16px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
       }
 
       input:focus,
@@ -183,22 +201,27 @@
       textarea:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
       }
 
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      /* Buttons */
       button {
         background-color: var(--primary);
         color: white;
         border: none;
-        padding: 10px 16px;
-        border-radius: 6px;
+        padding: 10px 18px;
+        border-radius: 8px;
         font-size: 0.95rem;
         font-weight: 600;
         cursor: pointer;
         font-family: inherit;
         transition: background-color 0.2s;
       }
-
       button:hover {
         background-color: var(--primary-hover);
       }
@@ -208,17 +231,15 @@
         color: var(--primary);
         border: 1px solid var(--primary);
       }
-
       button.btn-outline:hover {
-        background-color: var(--info-bg);
+        background-color: #eff6ff;
       }
 
       button.btn-danger {
         background-color: var(--danger);
       }
-
       button.btn-danger:hover {
-        background-color: #b91c1c;
+        background-color: var(--danger-hover);
       }
 
       .action-row {
@@ -232,6 +253,16 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      /* Tables */
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
       }
 
       table {
@@ -244,25 +275,60 @@
       th,
       td {
         border-bottom: 1px solid var(--border);
-        padding: 12px;
+        padding: 12px 16px;
         text-align: left;
       }
-
       th {
         background-color: #f8fafc;
         font-weight: 700;
         color: var(--text-muted);
+        white-space: nowrap;
+      }
+      tbody tr:hover {
+        background-color: #f1f5f9;
       }
 
-      .table-container {
-        width: 100%;
-        overflow-x: auto;
-      }
-
+      /* Utils */
       .hidden {
         display: none !important;
       }
+      .text-center {
+        text-align: center;
+      }
+      .mt-4 {
+        margin-top: 16px;
+      }
+      .mb-4 {
+        margin-bottom: 16px;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+      }
 
+      /* Badge */
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .badge-error {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-neutral {
+        background-color: #f1f5f9;
+        color: #475569;
+      }
+
+      /* Toast */
       #toast {
         position: fixed;
         top: 20px;
@@ -270,41 +336,42 @@
         transform: translateX(-50%);
         background-color: #334155;
         color: white;
-        padding: 12px 24px;
+        padding: 14px 24px;
         border-radius: 8px;
-        font-weight: 500;
+        font-weight: 600;
         z-index: 9999;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.3s ease;
+        transition:
+          opacity 0.3s ease,
+          top 0.3s ease;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       }
-
       #toast.show {
         opacity: 1;
+        top: 30px;
       }
 
-      .text-center {
-        text-align: center;
-      }
-
-      .mt-4 {
-        margin-top: 16px;
-      }
-
-      hr {
-        border: 0;
-        border-top: 1px solid var(--border);
-        margin: 24px 0;
+      /* Code Block */
+      .code-block {
+        background-color: #1e293b;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+        margin-bottom: 16px;
+        line-height: 1.4;
       }
 
       @media (max-width: 768px) {
-        .grid-2,
-        .stats-grid {
+        .grid-2 {
           grid-template-columns: 1fr;
         }
         body {
-          padding: 16px;
+          padding: 20px 16px;
         }
       }
     </style>
@@ -313,28 +380,30 @@
     <h1>메타엠 GOC2 연차 확인 시스템</h1>
 
     <div class="notice-box">
-      <strong>[안내] 데이터 저장 방식 안내</strong>
+      <strong>[시스템 안내]</strong>
       <ul>
         <li>
-          이 버전은 브라우저 내부의 localStorage를 기반으로 동작하여
-          <strong>현재 브라우저에서만 데이터가 유지</strong>됩니다.
+          이 버전은 <strong>Supabase 공용 DB</strong>를 기반으로 작동하여 다른 브라우저/PC에서도 동일한 데이터를 확인할
+          수 있습니다.
         </li>
+        <li><strong>최초 1회 Supabase URL 및 Anon Key 설정이 필수</strong>입니다. (Supabase 설정 탭)</li>
+        <li>직원 조회 기능은 누구나 공용으로 사용 가능합니다.</li>
         <li>
-          다른 브라우저나 다른 PC에서 사용하려면 관리자 페이지에서
-          <strong>엑셀 또는 JSON으로 내보내기 후 다시 가져오기</strong>를 해야 합니다.
+          관리자 비밀번호(801300)는 프론트엔드 레벨의 잠금입니다. 실제 운영 시 Supabase RLS/Auth 정책으로 관리자 쓰기
+          권한을 엄격히 제한해야 합니다.
         </li>
-        <li>관리자 비밀번호는 프론트엔드 레벨의 잠금이므로 사내/개인 관리용으로 적합합니다.</li>
       </ul>
     </div>
 
     <nav class="tabs" id="mainTabs">
       <button class="tab-btn active" data-target="sec-employee">직원 연차 조회</button>
       <button class="tab-btn" data-target="sec-admin">관리자 페이지</button>
+      <button class="tab-btn" data-target="sec-settings">Supabase 설정</button>
     </nav>
 
     <div id="toast">메시지</div>
 
-    <!-- 1. 직원 조회 섹션 -->
+    <!-- 1. 직원 연차 조회 -->
     <section id="sec-employee" class="tab-content">
       <article class="card">
         <h3>본인 연차 조회</h3>
@@ -356,6 +425,7 @@
       <div id="search-result" class="hidden">
         <article class="card">
           <h3 id="res-emp-name" class="text-center mb-4">홍길동 님의 연차 현황</h3>
+
           <div class="stats-grid">
             <div class="stat-item">
               <h4>총 연차</h4>
@@ -397,7 +467,7 @@
       </div>
     </section>
 
-    <!-- 2. 관리자 섹션 -->
+    <!-- 2. 관리자 페이지 -->
     <section id="sec-admin" class="tab-content hidden">
       <!-- 로그인 게이트 -->
       <article class="card" id="admin-gate">
@@ -417,7 +487,7 @@
           <button id="btn-logout" class="btn-outline">로그아웃</button>
         </div>
 
-        <!-- 데이터 연동/엑셀 -->
+        <!-- 데이터 관리 -->
         <article class="card">
           <h3>데이터 관리 (엑셀 / JSON / 초기화)</h3>
 
@@ -428,12 +498,12 @@
             <button id="btn-dl-template" class="btn-outline">엑셀 템플릿 다운로드</button>
           </div>
 
-          <div class="grid-2">
+          <div class="grid-2 mb-4">
             <div>
-              <label>엑셀 가져오기 모드</label>
-              <select id="sel-import-mode">
+              <label>엑셀/JSON 가져오기 모드</label>
+              <select id="sel-import-mode" style="margin-bottom: 0">
                 <option value="merge">기존 데이터 유지 + 병합</option>
-                <option value="replace">전체 덮어쓰기 (기존 데이터 삭제)</option>
+                <option value="replace">전체 덮어쓰기 (기존 데이터 완전 삭제)</option>
               </select>
             </div>
           </div>
@@ -446,15 +516,16 @@
             rows="4"
             placeholder="JSON 데이터를 이곳에 붙여넣어 복원하거나 내보내기 하세요."
           ></textarea>
+
           <div class="action-row">
             <button id="btn-export-json" class="btn-outline">JSON 내보내기</button>
             <button id="btn-import-json" class="btn-outline">JSON 복원하기</button>
-            <button id="btn-reset-sample" class="btn-danger">샘플 데이터 초기화 (로컬 데이터 삭제)</button>
+            <button id="btn-reset-sample" class="btn-danger">샘플 데이터 초기화 (DB 삽입)</button>
           </div>
         </article>
 
         <div class="grid-2">
-          <!-- 직원 등록 -->
+          <!-- 직원 등록/수정 -->
           <article class="card">
             <h3>직원 등록 / 수정</h3>
             <form id="frm-emp">
@@ -481,7 +552,7 @@
             </form>
           </article>
 
-          <!-- 내역 등록 -->
+          <!-- 연차 내역 등록 -->
           <article class="card">
             <h3>연차 내역 등록</h3>
             <form id="frm-hist">
@@ -538,6 +609,7 @@
               <thead>
                 <tr>
                   <th>직원이름</th>
+                  <th>사번</th>
                   <th>사용일</th>
                   <th>종류</th>
                   <th>차감일수</th>
@@ -552,15 +624,120 @@
       </div>
     </section>
 
-    <!-- Javascript 로직 -->
-    <script>
-      /* --------------------------------------------------------
-         1. 상수 및 상태
-      -------------------------------------------------------- */
-      const ADMIN_PWD = '801300';
-      const STORAGE_KEY = 'metam_goc2_local_data_v1';
+    <!-- 3. Supabase 설정 -->
+    <section id="sec-settings" class="tab-content hidden">
+      <article class="card">
+        <h3>Supabase 연결 설정</h3>
+        <p>
+          본 시스템을 사용하려면 Supabase 프로젝트의 URL과 Anon Key를 입력해야 합니다.<br />
+          (입력한 정보는 현재 브라우저의 localStorage에 보관됩니다.)
+        </p>
 
-      // 연차 규칙 정의
+        <div class="mb-4">
+          <span>현재 상태: <span id="badge-supa-status" class="badge badge-neutral">미설정</span></span>
+        </div>
+
+        <form id="frm-supa">
+          <label>Supabase Project URL</label>
+          <input type="url" id="supa-url" placeholder="https://xxxx.supabase.co" required />
+
+          <label>Supabase Anon Key</label>
+          <input type="password" id="supa-key" placeholder="eyJhbG..." required />
+
+          <div class="action-row mt-4">
+            <button type="submit">저장 및 연결 테스트</button>
+            <button type="button" id="btn-supa-clear" class="btn-danger">설정 초기화</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card">
+        <h3>Supabase 초기 설정 안내 (SQL)</h3>
+        <p>Supabase 프로젝트 생성 후 SQL Editor에서 아래 코드를 실행하여 테이블을 생성하세요.</p>
+
+        <div class="code-block">
+          -- 1. 직원 테이블 생성
+          create table if not exists public.employees (
+            id uuid primary key default gen_random_uuid(),
+            name text not null,
+            employee_no text not null unique,
+            department text,
+            hire_date date,
+            annual_leave_total numeric default 15,
+            created_at timestamptz default now()
+          );
+
+          -- 2. 연차 내역 테이블 생성
+          create table if not exists public.leave_histories (
+            id uuid primary key default gen_random_uuid(),
+            employee_id uuid references public.employees(id) on delete cascade,
+            leave_date date not null,
+            leave_type text not null,
+            days_used numeric default 0,
+            reason text,
+            created_at timestamptz default now()
+          );
+
+          -- 3. RLS 활성화
+          alter table public.employees enable row level security;
+          alter table public.leave_histories enable row level security;
+
+          -- 4. 모든 사용자는 조회 가능
+          create policy "employees_select_all"
+          on public.employees
+          for select
+          to anon, authenticated
+          using (true);
+
+          create policy "leave_histories_select_all"
+          on public.leave_histories
+          for select
+          to anon, authenticated
+          using (true);
+
+          -- 5. 실제 운영 권장
+          -- 관리자 입력/수정/삭제는 anon 공개 정책으로 열지 말고
+          -- authenticated 사용자 + 별도 관리자 판별 방식으로 제한하세요.
+          -- 예: auth.users와 연결된 profiles 테이블에 is_admin 컬럼을 두고
+          -- using / with check 조건으로 is_admin = true 인 경우만 허용
+
+          -- 6. 테스트용으로만 관리자 쓰기를 빠르게 열고 싶다면
+          -- 아래처럼 insert / update / delete 정책을 추가할 수 있으나
+          -- 보안상 권장하지 않습니다.
+          -- create policy "employees_insert_admin_only" on public.employees for insert to authenticated with check (true);
+          -- create policy "employees_update_admin_only" on public.employees for update to authenticated using (true) with check (true);
+          -- create policy "employees_delete_admin_only" on public.employees for delete to authenticated using (true);
+          -- create policy "leave_histories_insert_admin_only" on public.leave_histories for insert to authenticated with check (true);
+          -- create policy "leave_histories_update_admin_only" on public.leave_histories for update to authenticated using (true) with check (true);
+          -- create policy "leave_histories_delete_admin_only" on public.leave_histories for delete to authenticated using (true);
+        </div>
+        <p style="margin-top: 12px; color: #475569; font-size: 0.92rem;">
+          권장 방식은 <strong>조회는 anon 허용</strong>, <strong>입력/수정/삭제는 authenticated 관리자만 허용</strong>입니다.
+          현재 HTML의 관리자 비밀번호 801300은 화면 잠금용이므로, 실제 권한 통제는 반드시 Supabase 정책으로 처리하세요.
+        </p>
+      </article>
+
+      <article class="card" style="background-color: transparent; border: none; box-shadow: none; padding: 0">
+        <h4>빠른 사용 순서</h4>
+        <ol style="margin: 0; padding-left: 20px; font-size: 0.95rem">
+          <li><strong>1) Supabase SQL 실행:</strong> Supabase에서 위 SQL로 테이블을 생성합니다.</li>
+          <li><strong>2) 연결 설정:</strong> 위 폼에 Supabase URL / anon key를 입력하고 저장합니다.</li>
+          <li><strong>3) 관리자 로그인:</strong> 관리자 탭에서 비밀번호 <strong>801300</strong>을 입력합니다.</li>
+          <li><strong>4) 데이터 등록:</strong> 직원을 등록하거나 엑셀 파일로 일괄 업로드합니다.</li>
+          <li><strong>5) 조회 사용:</strong> 이제 직원들은 조회 탭에서 자유롭게 자신의 연차를 확인할 수 있습니다.</li>
+        </ol>
+      </article>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+      /* ==========================================================================
+       1. 상수 및 상태 관리
+    ========================================================================== */
+      const ADMIN_PWD = '801300';
+      const SUPA_URL_KEY = 'goc2_supa_url_v2';
+      const SUPA_KEY_KEY = 'goc2_supa_key_v2';
+
       const LEAVE_RULES = {
         '일반 연차': 1,
         '반일 연차': 0.5,
@@ -568,85 +745,32 @@
         '공가 연차': 0,
       };
 
-      // 구버전 및 혼용 명칭 호환성
       const LEAVE_ALIAS = {
         연차: '일반 연차',
         반차: '반일 연차',
         공가: '공가 연차',
       };
 
-      let appData = {
+      let supaClient = null;
+      let isAdminAuth = false;
+      let state = {
         employees: [],
         histories: [],
       };
 
-      let isAdminAuth = false;
-
-      // 초기 샘플 데이터
-      const SAMPLE_DATA = {
-        employees: [
-          {
-            id: 'e_1',
-            name: '홍길동',
-            employeeNo: 'GOC20001',
-            department: '개발팀',
-            hireDate: '2021-03-02',
-            annualLeaveTotal: 15,
-          },
-          {
-            id: 'e_2',
-            name: '김영희',
-            employeeNo: 'GOC20002',
-            department: '인사팀',
-            hireDate: '2022-01-10',
-            annualLeaveTotal: 15,
-          },
-        ],
-        histories: [
-          {
-            id: 'h_1',
-            employeeId: 'e_1',
-            leaveDate: '2023-05-10',
-            leaveType: '일반 연차',
-            daysUsed: 1,
-            reason: '개인사정',
-          },
-          {
-            id: 'h_2',
-            employeeId: 'e_1',
-            leaveDate: '2023-08-14',
-            leaveType: '반일 연차',
-            daysUsed: 0.5,
-            reason: '병원진료',
-          },
-          {
-            id: 'h_3',
-            employeeId: 'e_2',
-            leaveDate: '2023-10-20',
-            leaveType: '생일 연차',
-            daysUsed: 0,
-            reason: '생일 휴가',
-          },
-        ],
-      };
-
-      /* --------------------------------------------------------
-         2. 유틸 함수
-      -------------------------------------------------------- */
+      /* ==========================================================================
+       2. 유틸리티 함수
+    ========================================================================== */
       function showToast(msg, isError = false) {
         const t = document.getElementById('toast');
         t.textContent = msg;
-        t.style.backgroundColor = isError ? '#dc2626' : '#334155';
+        t.style.backgroundColor = isError ? '#dc2626' : '#1e293b';
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 3000);
       }
 
-      function generateId() {
-        return Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-      }
-
       function getNormalizedLeaveType(raw) {
-        const type = String(raw).trim();
+        const type = String(raw || '').trim();
         if (LEAVE_RULES[type] !== undefined) return type;
         if (LEAVE_ALIAS[type] !== undefined) return LEAVE_ALIAS[type];
         return '일반 연차'; // 기본값
@@ -666,17 +790,20 @@
       function normalizeDateValue(value) {
         if (value === null || value === undefined || value === '') return '';
 
+        // Excel Serial Number Handling
         if (typeof value === 'number' && Number.isFinite(value)) {
           const excelEpoch = new Date(Date.UTC(1899, 11, 30));
           excelEpoch.setUTCDate(excelEpoch.getUTCDate() + Math.floor(value));
           return formatDateObject(excelEpoch);
         }
 
+        // String Handling
         const text = String(value).trim();
         if (!text) return '';
         if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
         if (/^\d{4}\.\d{2}\.\d{2}$/.test(text)) return text.replace(/\./g, '-');
         if (/^\d{4}\/\d{2}\/\d{2}$/.test(text)) return text.replace(/\//g, '-');
+
         if (/^\d+(\.\d+)?$/.test(text)) {
           const numeric = Number(text);
           if (Number.isFinite(numeric)) {
@@ -705,121 +832,154 @@
       function switchTab(targetId) {
         document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach((el) => el.classList.remove('active'));
-
         document.getElementById(targetId).classList.remove('hidden');
         document.querySelector(`[data-target="${targetId}"]`).classList.add('active');
       }
 
-      /* --------------------------------------------------------
-         3. 저장소 함수 (localStorage)
-      -------------------------------------------------------- */
-      function loadData() {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed.employees && parsed.histories) {
-              parsed.employees = parsed.employees.map((employee) => ({
-                ...employee,
-                hireDate: normalizeDateValue(employee.hireDate || employee.hire_date || ''),
-              }));
-              parsed.histories = parsed.histories.map((history) => ({
-                ...history,
-                leaveDate: normalizeDateValue(history.leaveDate || history.leave_date || ''),
-              }));
-              appData = parsed;
-            } else {
-              throw new Error('Invalid format');
-            }
-          } catch (e) {
-            console.error('Data parsing error:', e);
-            resetSampleData(false);
-          }
+      /* ==========================================================================
+       3. Supabase 설정 함수
+    ========================================================================== */
+      function initSupabase() {
+        const url = localStorage.getItem(SUPA_URL_KEY);
+        const key = localStorage.getItem(SUPA_KEY_KEY);
+
+        if (url && key) {
+          document.getElementById('supa-url').value = url;
+          document.getElementById('supa-key').value = key;
+          supaClient = window.supabase.createClient(url, key);
+          checkSupaConnection();
         } else {
-          resetSampleData(false);
+          updateSupaBadge(false, '미설정');
         }
       }
 
-      function saveData() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      function updateSupaBadge(isOk, text) {
+        const badge = document.getElementById('badge-supa-status');
+        badge.textContent = text;
+        badge.className = 'badge ' + (isOk ? 'badge-success' : 'badge-error');
       }
 
-      function resetSampleData(showAlert = true) {
-        if (showAlert && !confirm('현재 데이터를 모두 지우고 샘플 데이터로 초기화합니다. 진행할까요?')) return;
-        appData = JSON.parse(JSON.stringify(SAMPLE_DATA)); // Deep copy
-        saveData();
-        if (showAlert) {
-          showToast('샘플 데이터로 초기화되었습니다.');
-          if (isAdminAuth) renderAdminAll();
+      async function checkSupaConnection() {
+        if (!supaClient) return;
+        try {
+          const { error } = await supaClient.from('employees').select('id').limit(1);
+          if (error) throw error;
+          updateSupaBadge(true, '연결 성공');
+        } catch (err) {
+          console.error('Supabase 연결 에러:', err);
+          updateSupaBadge(false, '연결 실패 (설정/테이블 확인 필요)');
+          supaClient = null;
         }
       }
 
-      /* --------------------------------------------------------
-         4. 직원 조회 함수
-      -------------------------------------------------------- */
-      function searchEmployee(e) {
+      async function handleSupaSave(e) {
         e.preventDefault();
+        const url = document.getElementById('supa-url').value.trim();
+        const key = document.getElementById('supa-key').value.trim();
+
+        localStorage.setItem(SUPA_URL_KEY, url);
+        localStorage.setItem(SUPA_KEY_KEY, key);
+
+        supaClient = window.supabase.createClient(url, key);
+        await checkSupaConnection();
+        if (supaClient) showToast('Supabase 설정이 저장되었습니다.', false);
+      }
+
+      function handleSupaClear() {
+        localStorage.removeItem(SUPA_URL_KEY);
+        localStorage.removeItem(SUPA_KEY_KEY);
+        document.getElementById('supa-url').value = '';
+        document.getElementById('supa-key').value = '';
+        supaClient = null;
+        updateSupaBadge(false, '미설정');
+        showToast('설정이 초기화되었습니다.');
+      }
+
+      /* ==========================================================================
+       4. 직원 조회 함수
+    ========================================================================== */
+      async function searchEmployee(e) {
+        e.preventDefault();
+        if (!supaClient) return showToast('Supabase 설정 탭에서 먼저 연결을 완료해주세요.', true);
+
         const name = document.getElementById('search-name').value.trim();
         const employeeNo = document.getElementById('search-empno').value.trim();
         const resBox = document.getElementById('search-result');
 
-        const emp = appData.employees.find((x) => x.name === name && x.employeeNo === employeeNo);
+        try {
+          const { data: emps, error: err1 } = await supaClient
+            .from('employees')
+            .select('*')
+            .eq('name', name)
+            .eq('employee_no', employeeNo);
 
-        if (!emp) {
-          resBox.classList.add('hidden');
-          return showToast('일치하는 직원 정보가 없습니다.', true);
+          if (err1) throw err1;
+          if (!emps || emps.length === 0) {
+            resBox.classList.add('hidden');
+            return showToast('일치하는 직원 정보가 없습니다.', true);
+          }
+
+          const emp = emps[0];
+
+          const { data: hists, error: err2 } = await supaClient
+            .from('leave_histories')
+            .select('*')
+            .eq('employee_id', emp.id)
+            .order('leave_date', { ascending: false });
+
+          if (err2) throw err2;
+
+          const total = parseFloat(emp.annual_leave_total) || 0;
+          const used = hists.reduce((acc, curr) => acc + (parseFloat(curr.days_used) || 0), 0);
+          const remain = total - used;
+          const hireDate = normalizeDateValue(emp.hire_date) || '-';
+          const expireDate = getExpireDate(emp.hire_date);
+
+          document.getElementById('res-emp-name').textContent = `${emp.name} 님의 연차 현황`;
+          document.getElementById('res-total').textContent = `${total}일`;
+          document.getElementById('res-used').textContent = `${used}일`;
+          document.getElementById('res-remain').textContent = `${remain}일`;
+          document.getElementById('res-hire-date').textContent = hireDate;
+          document.getElementById('res-expire-date').textContent = expireDate;
+
+          const tbody = document.querySelector('#tbl-res-history tbody');
+          tbody.innerHTML = '';
+          if (hists.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">사용 내역이 없습니다.</td></tr>';
+          } else {
+            hists.forEach((h) => {
+              tbody.innerHTML += `
+              <tr>
+                <td>${h.leave_date}</td>
+                <td>${h.leave_type}</td>
+                <td>${h.days_used}일</td>
+                <td>${h.reason || '-'}</td>
+              </tr>
+            `;
+            });
+          }
+          resBox.classList.remove('hidden');
+          showToast('조회 성공');
+        } catch (err) {
+          console.error(err);
+          showToast('조회 중 오류가 발생했습니다.', true);
         }
-
-        const hists = appData.histories
-          .filter((h) => h.employeeId === emp.id)
-          .sort((a, b) => new Date(b.leaveDate) - new Date(a.leaveDate)); // 최신순
-
-        const total = parseFloat(emp.annualLeaveTotal) || 0;
-        const used = hists.reduce((acc, curr) => acc + (parseFloat(curr.daysUsed) || 0), 0);
-        const remain = total - used;
-        const hireDate = normalizeDateValue(emp.hireDate) || '-';
-        const expireDate = getExpireDate(emp.hireDate);
-
-        document.getElementById('res-emp-name').textContent = `${emp.name} 님의 연차 현황`;
-        document.getElementById('res-total').textContent = `${total}일`;
-        document.getElementById('res-used').textContent = `${used}일`;
-        document.getElementById('res-remain').textContent = `${remain}일`;
-        document.getElementById('res-hire-date').textContent = hireDate;
-        document.getElementById('res-expire-date').textContent = expireDate;
-
-        const tbody = document.querySelector('#tbl-res-history tbody');
-        tbody.innerHTML = '';
-        if (hists.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-center">사용 내역이 없습니다.</td></tr>';
-        } else {
-          hists.forEach((h) => {
-            tbody.innerHTML += `
-            <tr>
-              <td>${h.leaveDate}</td>
-              <td>${h.leaveType}</td>
-              <td>${h.daysUsed}일</td>
-              <td>${h.reason || '-'}</td>
-            </tr>
-          `;
-          });
-        }
-        resBox.classList.remove('hidden');
-        showToast('조회 완료');
       }
 
-      /* --------------------------------------------------------
-         5. 관리자 CRUD & 렌더링 함수
-      -------------------------------------------------------- */
+      /* ==========================================================================
+       5. 관리자 기능 (CRUD 및 렌더링)
+    ========================================================================== */
       function handleAdminLogin(e) {
         e.preventDefault();
         const pwd = document.getElementById('admin-pwd').value;
         if (pwd === ADMIN_PWD) {
+          if (!supaClient) return showToast('Supabase 설정 탭에서 연결을 먼저 해주세요.', true);
           isAdminAuth = true;
           document.getElementById('admin-gate').classList.add('hidden');
           document.getElementById('admin-dashboard').classList.remove('hidden');
           document.getElementById('admin-pwd').value = '';
-          renderAdminAll();
-          showToast('관리자 인증 성공');
+          loadAdminData();
+          showToast('관리자 모드 활성화');
         } else {
           showToast('비밀번호가 일치하지 않습니다.', true);
         }
@@ -832,37 +992,53 @@
         showToast('로그아웃 되었습니다.');
       }
 
-      function renderAdminAll() {
-        renderAdminSelects();
-        renderAdminTables();
+      async function loadAdminData() {
+        if (!supaClient || !isAdminAuth) return;
+        try {
+          const [empRes, histRes] = await Promise.all([
+            supaClient.from('employees').select('*').order('name'),
+            supaClient
+              .from('leave_histories')
+              .select('*, employees(name, employee_no)')
+              .order('leave_date', { ascending: false }),
+          ]);
+
+          if (empRes.error) throw empRes.error;
+          if (histRes.error) throw histRes.error;
+
+          state.employees = empRes.data || [];
+          state.histories = histRes.data || [];
+
+          renderAdminAll();
+        } catch (err) {
+          console.error(err);
+          showToast('관리자 데이터 로드 실패', true);
+        }
       }
 
-      function renderAdminSelects() {
+      function renderAdminAll() {
+        // 1. Select
         const sel = document.getElementById('hist-emp-sel');
         sel.innerHTML = '<option value="">직원을 선택하세요</option>';
-        appData.employees
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .forEach((e) => {
-            sel.innerHTML += `<option value="${e.id}">${e.name} (${e.employeeNo})</option>`;
-          });
-      }
+        state.employees.forEach((e) => {
+          sel.innerHTML += `<option value="${e.id}">${e.name} (${e.employee_no})</option>`;
+        });
 
-      function renderAdminTables() {
-        // 직원 테이블
+        // 2. Employees Table
         const tEmp = document.querySelector('#tbl-admin-emp tbody');
         tEmp.innerHTML = '';
-        appData.employees.forEach((e) => {
-          const used = appData.histories
-            .filter((h) => h.employeeId === e.id)
-            .reduce((acc, curr) => acc + parseFloat(curr.daysUsed || 0), 0);
-          const total = parseFloat(e.annualLeaveTotal || 0);
+        state.employees.forEach((e) => {
+          const used = state.histories
+            .filter((h) => h.employee_id === e.id)
+            .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
+          const total = parseFloat(e.annual_leave_total || 0);
 
           tEmp.innerHTML += `
           <tr>
             <td>${e.name}</td>
-            <td>${e.employeeNo}</td>
+            <td>${e.employee_no}</td>
             <td>${e.department || '-'}</td>
-            <td>${e.hireDate || '-'}</td>
+            <td>${e.hire_date || '-'}</td>
             <td>${total}</td>
             <td>${used} / ${total - used}</td>
             <td>
@@ -873,20 +1049,19 @@
         `;
         });
 
-        // 내역 테이블
+        // 3. Histories Table
         const tHist = document.querySelector('#tbl-admin-hist tbody');
         tHist.innerHTML = '';
-
-        const sortedHists = [...appData.histories].sort((a, b) => new Date(b.leaveDate) - new Date(a.leaveDate));
-        sortedHists.forEach((h) => {
-          const emp = appData.employees.find((x) => x.id === h.employeeId);
-          const empName = emp ? emp.name : '<span style="color:red;">알수없음</span>';
+        state.histories.forEach((h) => {
+          const empName = h.employees ? h.employees.name : '알수없음';
+          const empNo = h.employees ? h.employees.employee_no : '-';
           tHist.innerHTML += `
           <tr>
             <td>${empName}</td>
-            <td>${h.leaveDate}</td>
-            <td>${h.leaveType}</td>
-            <td>${h.daysUsed}</td>
+            <td>${empNo}</td>
+            <td>${h.leave_date}</td>
+            <td>${h.leave_type}</td>
+            <td>${h.days_used}</td>
             <td>${h.reason || '-'}</td>
             <td>
               <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="delHist('${h.id}')">삭제</button>
@@ -896,102 +1071,182 @@
         });
       }
 
-      function saveEmployee(e) {
+      async function saveEmployee(e) {
         e.preventDefault();
         const id = document.getElementById('emp-id').value;
         const payload = {
           name: document.getElementById('emp-name').value.trim(),
-          employeeNo: document.getElementById('emp-no').value.trim(),
-          department: document.getElementById('emp-dept').value.trim(),
-          hireDate: document.getElementById('emp-hire').value || '',
-          annualLeaveTotal: parseFloat(document.getElementById('emp-total').value) || 0,
+          employee_no: document.getElementById('emp-no').value.trim(),
+          department: document.getElementById('emp-dept').value.trim() || null,
+          hire_date: normalizeDateValue(document.getElementById('emp-hire').value) || null,
+          annual_leave_total: parseFloat(document.getElementById('emp-total').value) || 0,
         };
 
-        if (id) {
-          // Update
-          const idx = appData.employees.findIndex((x) => x.id === id);
-          if (idx > -1) {
-            // Check duplication
-            const exists = appData.employees.find((x) => x.employeeNo === payload.employeeNo && x.id !== id);
-            if (exists) return showToast('이미 존재하는 사번입니다.', true);
+        try {
+          if (id) {
+            // 중복사번 체크 (본인 제외)
+            const dup = state.employees.find((x) => x.employee_no === payload.employee_no && x.id !== id);
+            if (dup) return showToast('이미 존재하는 사번입니다.', true);
 
-            appData.employees[idx] = { ...appData.employees[idx], ...payload };
-            showToast('직원 정보 수정 완료');
+            const { error } = await supaClient.from('employees').update(payload).eq('id', id);
+            if (error) throw error;
+            showToast('직원 수정 완료');
+          } else {
+            // 중복사번 체크
+            const dup = state.employees.find((x) => x.employee_no === payload.employee_no);
+            if (dup) return showToast('이미 존재하는 사번입니다.', true);
+
+            const { error } = await supaClient.from('employees').insert([payload]);
+            if (error) throw error;
+            showToast('직원 등록 완료');
           }
-        } else {
-          // Insert
-          const exists = appData.employees.find((x) => x.employeeNo === payload.employeeNo);
-          if (exists) return showToast('이미 존재하는 사번입니다.', true);
 
-          payload.id = generateId();
-          appData.employees.push(payload);
-          showToast('직원 정보 등록 완료');
+          document.getElementById('btn-emp-clear').click();
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('저장 중 오류 발생', true);
         }
-
-        saveData();
-        document.getElementById('btn-emp-clear').click();
-        renderAdminAll();
       }
 
       window.editEmp = (id) => {
-        const emp = appData.employees.find((x) => x.id === id);
+        const emp = state.employees.find((x) => x.id === id);
         if (!emp) return;
         document.getElementById('emp-id').value = emp.id;
         document.getElementById('emp-name').value = emp.name;
-        document.getElementById('emp-no').value = emp.employeeNo;
+        document.getElementById('emp-no').value = emp.employee_no;
         document.getElementById('emp-dept').value = emp.department || '';
-        document.getElementById('emp-hire').value = emp.hireDate || '';
-        document.getElementById('emp-total').value = emp.annualLeaveTotal;
+        document.getElementById('emp-hire').value = emp.hire_date || '';
+        document.getElementById('emp-total').value = emp.annual_leave_total;
       };
 
-      window.delEmp = (id) => {
+      window.delEmp = async (id) => {
         if (!confirm('직원과 관련된 연차 내역이 모두 삭제됩니다. 계속하시겠습니까?')) return;
-        appData.employees = appData.employees.filter((x) => x.id !== id);
-        appData.histories = appData.histories.filter((x) => x.employeeId !== id);
-        saveData();
-        showToast('삭제되었습니다.');
-        renderAdminAll();
+        try {
+          const { error } = await supaClient.from('employees').delete().eq('id', id);
+          if (error) throw error;
+          showToast('삭제 완료');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('삭제 실패', true);
+        }
       };
 
-      function saveHistory(e) {
+      async function saveHistory(e) {
         e.preventDefault();
-        const typeRaw = document.getElementById('hist-type').value;
-        const typeNorm = getNormalizedLeaveType(typeRaw);
+        const typeNorm = getNormalizedLeaveType(document.getElementById('hist-type').value);
 
         const payload = {
-          id: generateId(),
-          employeeId: document.getElementById('hist-emp-sel').value,
-          leaveDate: document.getElementById('hist-date').value,
-          leaveType: typeNorm,
-          daysUsed: getDaysUsed(typeNorm),
+          employee_id: document.getElementById('hist-emp-sel').value,
+          leave_date: normalizeDateValue(document.getElementById('hist-date').value),
+          leave_type: typeNorm,
+          days_used: getDaysUsed(typeNorm),
           reason: document.getElementById('hist-reason').value.trim(),
         };
 
-        appData.histories.push(payload);
-        saveData();
-        showToast('연차 내역 등록 완료');
-        document.getElementById('frm-hist').reset();
-        document.getElementById('hist-type').value = '일반 연차';
-        renderAdminAll();
+        try {
+          const { error } = await supaClient.from('leave_histories').insert([payload]);
+          if (error) throw error;
+          showToast('내역 등록 완료');
+          document.getElementById('frm-hist').reset();
+          document.getElementById('hist-type').value = '일반 연차';
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('내역 등록 실패', true);
+        }
       }
 
-      window.delHist = (id) => {
-        if (!confirm('이 사용 내역을 삭제하시겠습니까?')) return;
-        appData.histories = appData.histories.filter((x) => x.id !== id);
-        saveData();
-        showToast('삭제되었습니다.');
-        renderAdminAll();
+      window.delHist = async (id) => {
+        if (!confirm('해당 사용 내역을 삭제하시겠습니까?')) return;
+        try {
+          const { error } = await supaClient.from('leave_histories').delete().eq('id', id);
+          if (error) throw error;
+          showToast('삭제 완료');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('삭제 실패', true);
+        }
       };
 
-      /* --------------------------------------------------------
-         6. JSON 및 Excel 함수
-      -------------------------------------------------------- */
-      function handleExportJson() {
-        document.getElementById('txt-json').value = JSON.stringify(appData, null, 2);
-        showToast('JSON 내보내기 완료. 텍스트를 복사하세요.');
+      /* ==========================================================================
+       6. JSON / Excel / 초기화
+    ========================================================================== */
+      async function resetSampleData() {
+        if (!confirm('기존 데이터를 모두 지우고 Supabase DB에 샘플 데이터를 삽입합니다. 진행할까요?')) return;
+        try {
+          await supaClient.from('leave_histories').delete().not('id', 'is', null);
+          await supaClient.from('employees').delete().not('id', 'is', null);
+
+          const sampleEmps = [
+            {
+              name: '홍길동',
+              employee_no: 'GOC20001',
+              department: '개발팀',
+              hire_date: '2021-03-02',
+              annual_leave_total: 15,
+            },
+            {
+              name: '김영희',
+              employee_no: 'GOC20002',
+              department: '인사팀',
+              hire_date: '2022-01-10',
+              annual_leave_total: 15,
+            },
+          ];
+
+          const { data: insertedEmps, error: eErr } = await supaClient.from('employees').insert(sampleEmps).select();
+          if (eErr) throw eErr;
+
+          const idMap = {};
+          insertedEmps.forEach((e) => {
+            idMap[e.name] = e.id;
+          });
+
+          const sampleHists = [
+            {
+              employee_id: idMap['홍길동'],
+              leave_date: '2023-05-10',
+              leave_type: '일반 연차',
+              days_used: 1,
+              reason: '개인사정',
+            },
+            {
+              employee_id: idMap['홍길동'],
+              leave_date: '2023-08-14',
+              leave_type: '반일 연차',
+              days_used: 0.5,
+              reason: '병원',
+            },
+            {
+              employee_id: idMap['김영희'],
+              leave_date: '2023-10-20',
+              leave_type: '생일 연차',
+              days_used: 0,
+              reason: '생일',
+            },
+          ];
+
+          const { error: hErr } = await supaClient.from('leave_histories').insert(sampleHists);
+          if (hErr) throw hErr;
+
+          showToast('샘플 데이터 삽입 완료');
+          loadAdminData();
+        } catch (err) {
+          console.error(err);
+          showToast('샘플 데이터 초기화 중 오류', true);
+        }
       }
 
-      function handleImportJson() {
+      function handleExportJson() {
+        const data = { employees: state.employees, histories: state.histories };
+        document.getElementById('txt-json').value = JSON.stringify(data, null, 2);
+        showToast('JSON 추출 완료. 텍스트를 복사하세요.');
+      }
+
+      async function handleImportJson() {
         const txt = document.getElementById('txt-json').value.trim();
         if (!txt) return showToast('입력된 JSON이 없습니다.', true);
 
@@ -999,45 +1254,69 @@
           const data = JSON.parse(txt);
           if (!data.employees || !data.histories) throw new Error('유효하지 않은 형식');
 
-          if (!confirm('현재 데이터를 전부 삭제하고 JSON 데이터를 덮어씁니다 (Replace 모드 적용). 계속할까요?')) return;
+          const mode = document.getElementById('sel-import-mode').value;
 
-          const newEmps = data.employees.map((e) => ({
-            id: generateId(),
-            name: e.name,
-            employeeNo: e.employeeNo || e.employee_no || e.rrn_front || e.rrnFront,
-            department: e.department || e.dept || '',
-            hireDate: normalizeDateValue(e.hireDate || e.hire_date || ''),
-            annualLeaveTotal: e.annualLeaveTotal || e.annual_leave_total || 0,
-          }));
+          if (mode === 'replace') {
+            if (!confirm('현재 데이터를 전부 삭제하고 JSON 데이터를 덮어씁니다 (Replace 모드). 계속할까요?')) return;
+            await supaClient.from('leave_histories').delete().not('id', 'is', null);
+            await supaClient.from('employees').delete().not('id', 'is', null);
+          } else {
+            if (!confirm('기존 데이터를 유지하고 JSON 데이터를 병합합니다 (Merge 모드). 계속할까요?')) return;
+          }
 
           const oldToNewId = {};
-          data.employees.forEach((oldE, index) => {
-            oldToNewId[oldE.id] = newEmps[index].id;
-          });
 
-          const newHists = [];
-          data.histories.forEach((h) => {
-            const newEmpId = oldToNewId[h.employeeId || h.employee_id];
-            if (newEmpId) {
-              const typeNorm = getNormalizedLeaveType(h.leaveType || h.leave_type);
-              newHists.push({
-                id: generateId(),
-                employeeId: newEmpId,
-                leaveDate: normalizeDateValue(h.leaveDate || h.leave_date),
-                leaveType: typeNorm,
-                daysUsed: getDaysUsed(typeNorm),
-                reason: h.reason || '',
-              });
+          // 1. Employees 처리
+          for (const oldE of data.employees) {
+            const empNo = String(oldE.employeeNo || oldE.employee_no || oldE.rrnFront || oldE.rrn_front || '').trim();
+            if (!empNo || !oldE.name) continue;
+
+            const payload = {
+              name: oldE.name,
+              employee_no: empNo,
+              department: oldE.department || oldE.dept || null,
+              hire_date: normalizeDateValue(oldE.hireDate || oldE.hire_date) || null,
+              annual_leave_total: parseFloat(oldE.annualLeaveTotal || oldE.annual_leave_total) || 0,
+            };
+
+            const { data: existing } = await supaClient.from('employees').select('id').eq('employee_no', empNo);
+
+            let newId;
+            if (existing && existing.length > 0) {
+              if (mode === 'merge') {
+                await supaClient.from('employees').update(payload).eq('id', existing[0].id);
+              }
+              newId = existing[0].id;
+            } else {
+              const { data: inserted } = await supaClient.from('employees').insert([payload]).select('id');
+              if (inserted && inserted.length > 0) newId = inserted[0].id;
             }
-          });
+            if (newId) oldToNewId[oldE.id] = newId;
+          }
 
-          appData.employees = newEmps;
-          appData.histories = newHists;
-          saveData();
+          // 2. Histories 처리
+          const hPayloads = [];
+          for (const h of data.histories) {
+            const newEmpId = oldToNewId[h.employeeId || h.employee_id];
+            if (!newEmpId) continue;
+
+            const nType = getNormalizedLeaveType(h.leaveType || h.leave_type);
+            hPayloads.push({
+              employee_id: newEmpId,
+              leave_date: normalizeDateValue(h.leaveDate || h.leave_date),
+              leave_type: nType,
+              days_used: getDaysUsed(nType),
+              reason: h.reason || '',
+            });
+          }
+
+          if (hPayloads.length > 0) {
+            await supaClient.from('leave_histories').insert(hPayloads);
+          }
 
           document.getElementById('txt-json').value = '';
-          showToast('JSON 데이터 복원 완료');
-          renderAdminAll();
+          showToast('JSON 가져오기 완료');
+          loadAdminData();
         } catch (err) {
           console.error(err);
           showToast('JSON 처리 오류. 포맷을 확인하세요.', true);
@@ -1071,21 +1350,23 @@
 
       function exportExcel() {
         const wb = XLSX.utils.book_new();
-        const emps = appData.employees.map((e) => ({
+        const emps = state.employees.map((e) => ({
           name: e.name,
-          employeeNo: e.employeeNo,
-          department: e.department,
-          hireDate: e.hireDate,
-          annualLeaveTotal: e.annualLeaveTotal,
+          employeeNo: e.employee_no,
+          department: e.department || '',
+          hireDate: e.hire_date || '',
+          annualLeaveTotal: e.annual_leave_total,
         }));
-        const hists = appData.histories.map((h) => {
-          const emp = appData.employees.find((x) => x.id === h.employeeId) || {};
+
+        const hists = state.histories.map((h) => {
+          const empName = h.employees ? h.employees.name : '';
+          const empNo = h.employees ? h.employees.employee_no : '';
           return {
-            name: emp.name || '',
-            employeeNo: emp.employeeNo || '',
-            leaveDate: h.leaveDate,
-            leaveType: h.leaveType,
-            reason: h.reason,
+            name: empName,
+            employeeNo: empNo,
+            leaveDate: h.leave_date,
+            leaveType: h.leave_type,
+            reason: h.reason || '',
           };
         });
 
@@ -1106,7 +1387,7 @@
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function (evt) {
+        reader.onload = async function (evt) {
           try {
             const data = new Uint8Array(evt.target.result);
             const wb = XLSX.read(data, { type: 'array' });
@@ -1119,11 +1400,10 @@
             const rawHists = XLSX.utils.sheet_to_json(wb.Sheets['histories']);
             const mode = document.getElementById('sel-import-mode').value;
 
-            let newEmps = mode === 'replace' ? [] : [...appData.employees];
-            let newHists = mode === 'replace' ? [] : [...appData.histories];
-
             if (mode === 'replace') {
               if (!confirm('기존 데이터를 모두 지우고 엑셀 데이터로 덮어씁니다. 계속할까요?')) return;
+              await supaClient.from('leave_histories').delete().not('id', 'is', null);
+              await supaClient.from('employees').delete().not('id', 'is', null);
             }
 
             // 1. Process Employees
@@ -1133,51 +1413,54 @@
 
               const payload = {
                 name: r.name,
-                employeeNo: empNo,
+                employee_no: empNo,
                 department: r.department || null,
-                hireDate: normalizeDateValue(r.hireDate || r.hire_date || ''),
-                annualLeaveTotal: parseFloat(r.annualLeaveTotal || r.annual_leave_total) || 0,
+                hire_date: normalizeDateValue(r.hireDate || r.hire_date) || null,
+                annual_leave_total: parseFloat(r.annualLeaveTotal || r.annual_leave_total) || 0,
               };
 
-              const existingIdx = newEmps.findIndex(
-                (x) => x.name === payload.name && x.employeeNo === payload.employeeNo,
-              );
+              const { data: ex } = await supaClient
+                .from('employees')
+                .select('id')
+                .eq('employee_no', payload.employee_no);
 
-              if (existingIdx > -1) {
+              if (ex && ex.length > 0) {
                 if (mode === 'merge') {
-                  newEmps[existingIdx] = { ...newEmps[existingIdx], ...payload };
+                  await supaClient.from('employees').update(payload).eq('id', ex[0].id);
                 }
               } else {
-                payload.id = generateId();
-                newEmps.push(payload);
+                await supaClient.from('employees').insert([payload]);
               }
             }
 
+            // Refresh emp list for history mapping
+            const { data: freshEmps } = await supaClient.from('employees').select('id, name, employee_no');
+
             // 2. Process Histories
+            const hPayloads = [];
             for (const r of rawHists) {
               const empNo = String(r.employeeNo || r.employee_no || r.rrnFront || r.rrn_front || '').trim();
               if (!r.name || !empNo || (!r.leaveDate && !r.leave_date)) continue;
 
-              const emp = newEmps.find((x) => x.name === r.name && x.employeeNo === empNo);
+              const emp = freshEmps.find((x) => x.employee_no === empNo);
               if (!emp) continue;
 
               const nType = getNormalizedLeaveType(r.leaveType || r.leave_type);
-              newHists.push({
-                id: generateId(),
-                employeeId: emp.id,
-                leaveDate: normalizeDateValue(r.leaveDate || r.leave_date),
-                leaveType: nType,
-                daysUsed: getDaysUsed(nType),
+              hPayloads.push({
+                employee_id: emp.id,
+                leave_date: normalizeDateValue(r.leaveDate || r.leave_date),
+                leave_type: nType,
+                days_used: getDaysUsed(nType),
                 reason: r.reason || '',
               });
             }
 
-            appData.employees = newEmps;
-            appData.histories = newHists;
-            saveData();
+            if (hPayloads.length > 0) {
+              await supaClient.from('leave_histories').insert(hPayloads);
+            }
 
             showToast('엑셀 가져오기 완료');
-            renderAdminAll();
+            loadAdminData();
           } catch (err) {
             console.error(err);
             showToast('엑셀 처리 중 오류 발생', true);
@@ -1188,17 +1471,19 @@
         reader.readAsArrayBuffer(file);
       }
 
-      /* --------------------------------------------------------
-         7. 이벤트 바인딩
-      -------------------------------------------------------- */
+      /* ==========================================================================
+       7. 이벤트 바인딩
+    ========================================================================== */
       document.addEventListener('DOMContentLoaded', () => {
-        // 데이터 로드
-        loadData();
-
         // 탭 전환
         document.querySelectorAll('.tab-btn').forEach((btn) => {
           btn.addEventListener('click', (e) => switchTab(e.target.dataset.target));
         });
+
+        // Supabase
+        initSupabase();
+        document.getElementById('frm-supa').addEventListener('submit', handleSupaSave);
+        document.getElementById('btn-supa-clear').addEventListener('click', handleSupaClear);
 
         // 직원 조회
         document.getElementById('frm-search').addEventListener('submit', searchEmployee);
@@ -1207,17 +1492,16 @@
         document.getElementById('frm-admin-login').addEventListener('submit', handleAdminLogin);
         document.getElementById('btn-logout').addEventListener('click', handleAdminLogout);
 
-        // 관리자 폼 저장 & 초기화
+        // 관리자 데이터 폼
         document.getElementById('frm-emp').addEventListener('submit', saveEmployee);
         document.getElementById('btn-emp-clear').addEventListener('click', () => {
           document.getElementById('emp-id').value = '';
           document.getElementById('frm-emp').reset();
           document.getElementById('emp-total').value = '15';
         });
-
         document.getElementById('frm-hist').addEventListener('submit', saveHistory);
 
-        // JSON, Excel, Data buttons
+        // JSON, Excel, Reset
         document.getElementById('btn-reset-sample').addEventListener('click', resetSampleData);
         document.getElementById('btn-export-json').addEventListener('click', handleExportJson);
         document.getElementById('btn-import-json').addEventListener('click', handleImportJson);
