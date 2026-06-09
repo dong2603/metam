@@ -133,7 +133,7 @@
 
       .stats-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 16px;
         margin-bottom: 24px;
       }
@@ -368,6 +368,14 @@
             <div class="stat-item">
               <h4>잔여 연차</h4>
               <p id="res-remain">0일</p>
+            </div>
+            <div class="stat-item">
+              <h4>본인 입사일</h4>
+              <p id="res-hire-date">-</p>
+            </div>
+            <div class="stat-item">
+              <h4>연차 만료일</h4>
+              <p id="res-expire-date">-</p>
             </div>
           </div>
 
@@ -648,6 +656,17 @@
         return LEAVE_RULES[getNormalizedLeaveType(type)] || 0;
       }
 
+      function getExpireDate(hireDate) {
+        if (!hireDate) return '-';
+        const date = new Date(hireDate);
+        if (Number.isNaN(date.getTime())) return '-';
+        date.setDate(date.getDate() + 364);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
       function switchTab(targetId) {
         document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach((el) => el.classList.remove('active'));
@@ -715,11 +734,15 @@
         const total = parseFloat(emp.annualLeaveTotal) || 0;
         const used = hists.reduce((acc, curr) => acc + (parseFloat(curr.daysUsed) || 0), 0);
         const remain = total - used;
+        const hireDate = emp.hireDate || '-';
+        const expireDate = getExpireDate(emp.hireDate);
 
         document.getElementById('res-emp-name').textContent = `${emp.name} 님의 연차 현황`;
         document.getElementById('res-total').textContent = `${total}일`;
         document.getElementById('res-used').textContent = `${used}일`;
         document.getElementById('res-remain').textContent = `${remain}일`;
+        document.getElementById('res-hire-date').textContent = hireDate;
+        document.getElementById('res-expire-date').textContent = expireDate;
 
         const tbody = document.querySelector('#tbl-res-history tbody');
         tbody.innerHTML = '';
