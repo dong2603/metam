@@ -389,7 +389,7 @@
         <li><strong>직원 조회는 이름과 사번만 입력하면 바로 조회</strong>할 수 있도록 공용 DB가 자동 연결되어 있습니다.</li>
         <li>직원 조회 기능은 누구나 공용으로 사용 가능합니다.</li>
         <li>
-          관리자 비밀번호는 프론트엔드 레벨의 잠금입니다. 실제 운영 시 Supabase RLS/Auth 정책으로 관리자 쓰기
+          관리자 비밀번호(801300)는 프론트엔드 레벨의 잠금입니다. 실제 운영 시 Supabase RLS/Auth 정책으로 관리자 쓰기
           권한을 엄격히 제한해야 합니다.
         </li>
       </ul>
@@ -817,14 +817,97 @@
         return text;
       }
 
-      function getExpireDate(hireDate) {
+      function getCompletedYears(hireDate, asOf = new Date()) {
+        const hire = new Date(normalizeDateValue(hireDate));
+        if (Number.isNaN(hire.getTime())) return 0;
+
+        const base = new Date(asOf);
+        base.setHours(0, 0, 0, 0);
+
+        let years = base.getFullYear() - hire.getFullYear();
+        const monthDiff = base.getMonth() - hire.getMonth();
+        const dayDiff = base.getDate() - hire.getDate();
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) years -= 1;
+        return Math.max(0, years);
+      }
+
+      function getCompletedMonths(hireDate, asOf = new Date()) {
+        const hire = new Date(normalizeDateValue(hireDate));
+        if (Number.isNaN(hire.getTime())) return 0;
+
+        const base = new Date(asOf);
+        base.setHours(0, 0, 0, 0);
+
+        let months = (base.getFullYear() - hire.getFullYear()) * 12 + (base.getMonth() - hire.getMonth());
+        if (base.getDate() < hire.getDate()) months -= 1;
+        return Math.max(0, months);
+      }
+
+      function addYearsSafe(date, years) {
+        const d = new Date(date);
+        d.setFullYear(d.getFullYear() + years);
+        return d;
+      }
+
+      function getLeaveCycleInfo(hireDate, asOf = new Date()) {
         const normalizedHireDate = normalizeDateValue(hireDate);
-        if (!normalizedHireDate) return '-';
-        const date = new Date(normalizedHireDate);
-        if (Number.isNaN(date.getTime())) return '-';
-        date.setDate(date.getDate() + 364);
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
+        if (!normalizedHireDate) return null;
+
+        const hire = new Date(normalizedHireDate);
+        if (Number.isNaN(hire.getTime())) return null;
+
+        const today = new Date(asOf);
+        today.setHours(0, 0, 0, 0);
+        hire.setHours(0, 0, 0, 0);
+
+        const completedYears = getCompletedYears(hire, today);
+        const firstAnniversary = addYearsSafe(hire, 1);
+
+        if (today < firstAnniversary) {
+          const completedMonths = Math.min(getCompletedMonths(hire, today), 11);
+          const cycleEnd = new Date(firstAnniversary);
+          cycleEnd.setDate(cycleEnd.getDate() - 1);
+          return {
+            cycleStart: formatDateObject(hire),
+            cycleEnd: formatDateObject(cycleEnd),
+            totalLeave: completedMonths,
+            completedYears,
+          };
+        }
+
+        const cycleStartDate = addYearsSafe(hire, completedYears);
+        const nextCycleStartDate = addYearsSafe(hire, completedYears + 1);
+        const cycleEndDate = new Date(nextCycleStartDate);
+        cycleEndDate.setDate(cycleEndDate.getDate() - 1);
+
+        const additionalLeave = Math.floor(Math.max(0, completedYears - 1) / 2);
+        const totalLeave = Math.min(15 + additionalLeave, 25);
+
+        return {
+          cycleStart: formatDateObject(cycleStartDate),
+          cycleEnd: formatDateObject(cycleEndDate),
+          totalLeave,
+          completedYears,
+        };
+      }
+
+      function getUsedLeaveInCycle(histories, employeeId, cycleStart, cycleEnd) {
+        return histories
+          .filter((h) => {
+            if (h.employee_id !== employeeId && h.employeeId !== employeeId) return false;
+            const leaveDate = normalizeDateValue(h.leave_date || h.leaveDate);
+            return leaveDate && leaveDate >= cycleStart && leaveDate <= cycleEnd;
+          })
+          .reduce((acc, curr) => acc + (parseFloat(curr.days_used || curr.daysUsed) || 0), 0);
+      }
+
+      function getExpireDate(hireDate) {
+        const cycleInfo = getLeaveCycleInfo(hireDate);
+        if (!cycleInfo) return '-';
+        const cycleEnd = new Date(cycleInfo.cycleEnd);
+        if (Number.isNaN(cycleEnd.getTime())) return '-';
+        const mm = String(cycleEnd.getMonth() + 1).padStart(2, '0');
+        const dd = String(cycleEnd.getDate()).padStart(2, '0');
         return `${mm}-${dd}`;
       }
 
@@ -911,11 +994,22 @@
 
           if (err2) throw err2;
 
-          const total = parseFloat(emp.annual_leave_total) || 0;
-          const used = hists.reduce((acc, curr) => acc + (parseFloat(curr.days_used) || 0), 0);
-          const remain = total - used;
+          const cycleInfo = getLeaveCycleInfo(emp.hire_date);
           const hireDate = normalizeDateValue(emp.hire_date) || '-';
           const expireDate = getExpireDate(emp.hire_date);
+          const total = cycleInfo ? cycleInfo.totalLeave : parseFloat(emp.annual_leave_total) || 0;
+          const cycleStart = cycleInfo ? cycleInfo.cycleStart : null;
+          const cycleEnd = cycleInfo ? cycleInfo.cycleEnd : null;
+          const cycleHists = cycleInfo
+            ? hists.filter((h) => {
+                const leaveDate = normalizeDateValue(h.leave_date);
+                return leaveDate && leaveDate >= cycleStart && leaveDate <= cycleEnd;
+              })
+            : hists;
+          const used = cycleInfo
+            ? getUsedLeaveInCycle(hists, emp.id, cycleStart, cycleEnd)
+            : hists.reduce((acc, curr) => acc + (parseFloat(curr.days_used) || 0), 0);
+          const remain = total - used;
 
           document.getElementById('res-emp-name').textContent = `${emp.name} 님의 연차 현황`;
           document.getElementById('res-total').textContent = `${total}일`;
@@ -926,10 +1020,10 @@
 
           const tbody = document.querySelector('#tbl-res-history tbody');
           tbody.innerHTML = '';
-          if (hists.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">사용 내역이 없습니다.</td></tr>';
+          if (cycleHists.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">현재 연차 주기의 사용 내역이 없습니다.</td></tr>';
           } else {
-            hists.forEach((h) => {
+            cycleHists.forEach((h) => {
               tbody.innerHTML += `
               <tr>
                 <td>${h.leave_date}</td>
@@ -1010,10 +1104,13 @@
         const tEmp = document.querySelector('#tbl-admin-emp tbody');
         tEmp.innerHTML = '';
         state.employees.forEach((e) => {
-          const used = state.histories
-            .filter((h) => h.employee_id === e.id)
-            .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
-          const total = parseFloat(e.annual_leave_total || 0);
+          const cycleInfo = getLeaveCycleInfo(e.hire_date);
+          const total = cycleInfo ? cycleInfo.totalLeave : parseFloat(e.annual_leave_total || 0);
+          const used = cycleInfo
+            ? getUsedLeaveInCycle(state.histories, e.id, cycleInfo.cycleStart, cycleInfo.cycleEnd)
+            : state.histories
+                .filter((h) => h.employee_id === e.id)
+                .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
 
           tEmp.innerHTML += `
           <tr>
