@@ -486,6 +486,24 @@
           <button id="btn-logout" class="btn-outline">로그아웃</button>
         </div>
 
+        <article class="card">
+          <h3>전체 연차 현황 <span style="font-size:0.9rem; color:#64748b; font-weight:500;">(오늘 날짜 기준)</span></h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">전체 총 연차</div>
+              <div class="stat-value" id="admin-overall-total">0일</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">전체 사용 연차</div>
+              <div class="stat-value" id="admin-overall-used">0일</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">전체 남은 연차</div>
+              <div class="stat-value" id="admin-overall-remain">0일</div>
+            </div>
+          </div>
+        </article>
+
         <!-- 데이터 관리 -->
         <article class="card">
           <h3>데이터 관리 (엑셀 / JSON / 초기화)</h3>
@@ -555,6 +573,9 @@
           <article class="card">
             <h3>연차 내역 등록</h3>
             <form id="frm-hist">
+              <p id="hist-selected-emp" style="margin: 0 0 12px; color: #475569; font-size: 0.92rem;">
+                직원 목록에서 <strong>내역</strong> 버튼을 누르면 해당 직원이 자동 선택됩니다.
+              </p>
               <label>직원 선택</label>
               <select id="hist-emp-sel" required></select>
 
@@ -602,7 +623,13 @@
 
         <!-- 내역 목록 -->
         <article class="card">
-          <h3>연차 사용 내역 목록</h3>
+          <div class="action-row" style="justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px;">
+            <div>
+              <h3 style="margin-bottom: 6px;">연차 사용 내역 목록</h3>
+              <div id="hist-filter-label" style="color: #475569; font-size: 0.92rem;">전체 직원 내역 표시 중</div>
+            </div>
+            <button type="button" id="btn-clear-hist-filter" class="btn-outline">전체 내역 보기</button>
+          </div>
           <div class="table-container">
             <table id="tbl-admin-hist">
               <thead>
@@ -752,6 +779,7 @@
 
       let supaClient = null;
       let isAdminAuth = false;
+      let selectedHistoryEmployeeId = '';
       let state = {
         employees: [],
         histories: [],
@@ -1095,10 +1123,30 @@
       function renderAdminAll() {
         // 1. Select
         const sel = document.getElementById('hist-emp-sel');
+        const selectedInfo = document.getElementById('hist-selected-emp');
+        const filterLabel = document.getElementById('hist-filter-label');
+        const clearBtn = document.getElementById('btn-clear-hist-filter');
         sel.innerHTML = '<option value="">직원을 선택하세요</option>';
         state.employees.forEach((e) => {
           sel.innerHTML += `<option value="${e.id}">${e.name} (${e.employee_no})</option>`;
         });
+
+        let overallTotal = 0;
+        let overallUsed = 0;
+        if (selectedHistoryEmployeeId) {
+          sel.value = selectedHistoryEmployeeId;
+        }
+
+        const selectedEmp = state.employees.find((e) => e.id === selectedHistoryEmployeeId);
+        if (selectedEmp) {
+          selectedInfo.innerHTML = `<strong>${selectedEmp.name}</strong> (${selectedEmp.employee_no}) 직원으로 내역 등록/조회 중`;
+          filterLabel.textContent = `${selectedEmp.name} (${selectedEmp.employee_no}) 직원 내역만 표시 중`;
+          clearBtn.style.display = 'inline-flex';
+        } else {
+          selectedInfo.innerHTML = '직원 목록에서 <strong>내역</strong> 버튼을 누르면 해당 직원이 자동 선택됩니다.';
+          filterLabel.textContent = '전체 직원 내역 표시 중';
+          clearBtn.style.display = 'none';
+        }
 
         // 2. Employees Table
         const tEmp = document.querySelector('#tbl-admin-emp tbody');
@@ -1112,6 +1160,9 @@
                 .filter((h) => h.employee_id === e.id)
                 .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
 
+          overallTotal += total;
+          overallUsed += used;
+
           tEmp.innerHTML += `
           <tr>
             <td>${e.name}</td>
@@ -1122,16 +1173,30 @@
             <td>${used} / ${total - used}</td>
             <td>
               <button class="btn-outline" style="padding:4px 8px; font-size:0.8rem;" onclick="editEmp('${e.id}')">수정</button>
+              <button class="btn-outline" style="padding:4px 8px; font-size:0.8rem;" onclick="openEmpHistory('${e.id}')">내역</button>
               <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="delEmp('${e.id}')">삭제</button>
             </td>
           </tr>
         `;
         });
 
+        document.getElementById('admin-overall-total').textContent = `${overallTotal}일`;
+        document.getElementById('admin-overall-used').textContent = `${overallUsed}일`;
+        document.getElementById('admin-overall-remain').textContent = `${overallTotal - overallUsed}일`;
+
         // 3. Histories Table
         const tHist = document.querySelector('#tbl-admin-hist tbody');
         tHist.innerHTML = '';
-        state.histories.forEach((h) => {
+        const filteredHistories = selectedHistoryEmployeeId
+          ? state.histories.filter((h) => h.employee_id === selectedHistoryEmployeeId)
+          : state.histories;
+
+        if (filteredHistories.length === 0) {
+          tHist.innerHTML = `<tr><td colspan="7" class="text-center">${selectedHistoryEmployeeId ? '선택한 직원의 연차 사용 내역이 없습니다.' : '등록된 연차 사용 내역이 없습니다.'}</td></tr>`;
+          return;
+        }
+
+        filteredHistories.forEach((h) => {
           const empName = h.employees ? h.employees.name : '알수없음';
           const empNo = h.employees ? h.employees.employee_no : '-';
           tHist.innerHTML += `
@@ -1199,6 +1264,16 @@
         document.getElementById('emp-total').value = emp.annual_leave_total;
       };
 
+      window.openEmpHistory = (id) => {
+        const emp = state.employees.find((x) => x.id === id);
+        if (!emp) return;
+        selectedHistoryEmployeeId = id;
+        document.getElementById('hist-emp-sel').value = id;
+        renderAdminAll();
+        document.getElementById('hist-date').focus();
+        showToast(`${emp.name} 직원의 연차 내역 등록/조회 모드로 전환되었습니다.`);
+      };
+
       window.delEmp = async (id) => {
         if (!confirm('직원과 관련된 연차 내역이 모두 삭제됩니다. 계속하시겠습니까?')) return;
         try {
@@ -1215,9 +1290,11 @@
       async function saveHistory(e) {
         e.preventDefault();
         const typeNorm = getNormalizedLeaveType(document.getElementById('hist-type').value);
+        const employeeId = document.getElementById('hist-emp-sel').value;
+        selectedHistoryEmployeeId = employeeId || '';
 
         const payload = {
-          employee_id: document.getElementById('hist-emp-sel').value,
+          employee_id: employeeId,
           leave_date: normalizeDateValue(document.getElementById('hist-date').value),
           leave_type: typeNorm,
           days_used: getDaysUsed(typeNorm),
@@ -1579,6 +1656,16 @@
           document.getElementById('emp-total').value = '15';
         });
         document.getElementById('frm-hist').addEventListener('submit', saveHistory);
+        document.getElementById('hist-emp-sel').addEventListener('change', (e) => {
+          selectedHistoryEmployeeId = e.target.value || '';
+          renderAdminAll();
+        });
+        document.getElementById('btn-clear-hist-filter').addEventListener('click', () => {
+          selectedHistoryEmployeeId = '';
+          document.getElementById('hist-emp-sel').value = '';
+          renderAdminAll();
+          showToast('전체 직원 내역 보기로 전환되었습니다.');
+        });
 
         // JSON, Excel, Reset
         document.getElementById('btn-reset-sample').addEventListener('click', resetSampleData);
