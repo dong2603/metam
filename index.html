@@ -389,7 +389,7 @@
         <li><strong>직원 조회는 이름과 사번만 입력하면 바로 조회</strong>할 수 있도록 공용 DB가 자동 연결되어 있습니다.</li>
         <li>직원 조회 기능은 누구나 공용으로 사용 가능합니다.</li>
         <li>
-          관리자 비밀번호(801300)는 프론트엔드 레벨의 잠금입니다. 실제 운영 시 Supabase RLS/Auth 정책으로 관리자 쓰기
+          관리자 비밀번호는 프론트엔드 레벨의 잠금입니다. 실제 운영 시 Supabase RLS/Auth 정책으로 관리자 쓰기
           권한을 엄격히 제한해야 합니다.
         </li>
       </ul>
@@ -602,7 +602,17 @@
 
         <!-- 직원 목록 -->
         <article class="card">
-          <h3>등록된 직원 목록</h3>
+          <div class="flex-between mb-4" style="gap: 12px; align-items: end; flex-wrap: wrap;">
+            <h3 style="margin-bottom: 0;">등록된 직원 목록</h3>
+            <div style="min-width: 260px;">
+              <label for="sel-emp-sort" style="margin-bottom: 6px;">정렬 기준</label>
+              <select id="sel-emp-sort" style="margin-bottom: 0;">
+                <option value="hire_asc" selected>입사일 오래된 순</option>
+                <option value="name_asc">이름 가나다 순</option>
+                <option value="remain_desc">잔여 연차 많은 순</option>
+              </select>
+            </div>
+          </div>
           <div class="table-container">
             <table id="tbl-admin-emp">
               <thead>
@@ -739,7 +749,7 @@
         </div>
         <p style="margin-top: 12px; color: #475569; font-size: 0.92rem;">
           권장 방식은 <strong>조회는 anon 허용</strong>, <strong>입력/수정/삭제는 authenticated 관리자만 허용</strong>입니다.
-          현재 HTML의 관리자 비밀번호 801300은 화면 잠금용이므로, 실제 권한 통제는 반드시 Supabase 정책으로 처리하세요.
+          현재 HTML의 관리자 비밀번호는 화면 잠금용이므로, 실제 권한 통제는 반드시 Supabase 정책으로 처리하세요.
         </p>
       </article>
 
@@ -748,7 +758,7 @@
         <ol style="margin: 0; padding-left: 20px; font-size: 0.95rem">
           <li><strong>1) Supabase SQL 실행:</strong> Supabase에서 위 SQL로 테이블을 생성합니다.</li>
           <li><strong>2) 연결 설정:</strong> 위 폼에 Supabase URL / anon key를 입력하고 저장합니다.</li>
-          <li><strong>3) 관리자 로그인:</strong> 관리자 탭에서 비밀번호 <strong>801300</strong>을 입력합니다.</li>
+          <li><strong>3) 관리자 로그인:</strong> 관리자 탭에서 관리자 비밀번호를 입력합니다.</li>
           <li><strong>4) 데이터 등록:</strong> 직원을 등록하거나 엑셀 파일로 일괄 업로드합니다.</li>
           <li><strong>5) 조회 사용:</strong> 이제 직원들은 조회 탭에서 자유롭게 자신의 연차를 확인할 수 있습니다.</li>
         </ol>
@@ -780,6 +790,7 @@
       let supaClient = null;
       let isAdminAuth = false;
       let selectedHistoryEmployeeId = '';
+      let adminEmpSortMode = 'hire_asc';
       let state = {
         employees: [],
         histories: [],
@@ -1121,13 +1132,41 @@
       }
 
       function renderAdminAll() {
+        const employeeMetrics = state.employees.map((e) => {
+          const cycleInfo = getLeaveCycleInfo(e.hire_date);
+          const total = cycleInfo ? cycleInfo.totalLeave : parseFloat(e.annual_leave_total || 0);
+          const used = cycleInfo
+            ? getUsedLeaveInCycle(state.histories, e.id, cycleInfo.cycleStart, cycleInfo.cycleEnd)
+            : state.histories
+                .filter((h) => h.employee_id === e.id)
+                .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
+          const remain = total - used;
+          const hireDate = normalizeDateValue(e.hire_date || '9999-12-31') || '9999-12-31';
+          return { ...e, cycleInfo, total, used, remain, hireDate };
+        });
+
+        const sortedEmployees = [...employeeMetrics].sort((a, b) => {
+          if (adminEmpSortMode === 'name_asc') {
+            return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+          }
+          if (adminEmpSortMode === 'remain_desc') {
+            if (b.remain !== a.remain) return b.remain - a.remain;
+            return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+          }
+          if (a.hireDate !== b.hireDate) return a.hireDate.localeCompare(b.hireDate);
+          return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+        });
+
         // 1. Select
         const sel = document.getElementById('hist-emp-sel');
         const selectedInfo = document.getElementById('hist-selected-emp');
         const filterLabel = document.getElementById('hist-filter-label');
         const clearBtn = document.getElementById('btn-clear-hist-filter');
+        const sortSelect = document.getElementById('sel-emp-sort');
+        if (sortSelect) sortSelect.value = adminEmpSortMode;
+
         sel.innerHTML = '<option value="">직원을 선택하세요</option>';
-        state.employees.forEach((e) => {
+        sortedEmployees.forEach((e) => {
           sel.innerHTML += `<option value="${e.id}">${e.name} (${e.employee_no})</option>`;
         });
 
@@ -1137,7 +1176,7 @@
           sel.value = selectedHistoryEmployeeId;
         }
 
-        const selectedEmp = state.employees.find((e) => e.id === selectedHistoryEmployeeId);
+        const selectedEmp = employeeMetrics.find((e) => e.id === selectedHistoryEmployeeId);
         if (selectedEmp) {
           selectedInfo.innerHTML = `<strong>${selectedEmp.name}</strong> (${selectedEmp.employee_no}) 직원으로 내역 등록/조회 중`;
           filterLabel.textContent = `${selectedEmp.name} (${selectedEmp.employee_no}) 직원 내역만 표시 중`;
@@ -1151,17 +1190,9 @@
         // 2. Employees Table
         const tEmp = document.querySelector('#tbl-admin-emp tbody');
         tEmp.innerHTML = '';
-        state.employees.forEach((e) => {
-          const cycleInfo = getLeaveCycleInfo(e.hire_date);
-          const total = cycleInfo ? cycleInfo.totalLeave : parseFloat(e.annual_leave_total || 0);
-          const used = cycleInfo
-            ? getUsedLeaveInCycle(state.histories, e.id, cycleInfo.cycleStart, cycleInfo.cycleEnd)
-            : state.histories
-                .filter((h) => h.employee_id === e.id)
-                .reduce((acc, curr) => acc + parseFloat(curr.days_used || 0), 0);
-
-          overallTotal += total;
-          overallUsed += used;
+        sortedEmployees.forEach((e) => {
+          overallTotal += e.total;
+          overallUsed += e.used;
 
           tEmp.innerHTML += `
           <tr>
@@ -1169,8 +1200,8 @@
             <td>${e.employee_no}</td>
             <td>${e.department || '-'}</td>
             <td>${e.hire_date || '-'}</td>
-            <td>${total}</td>
-            <td>${used} / ${total - used}</td>
+            <td>${e.total}</td>
+            <td>${e.used} / ${e.remain}</td>
             <td>
               <button class="btn-outline" style="padding:4px 8px; font-size:0.8rem;" onclick="editEmp('${e.id}')">수정</button>
               <button class="btn-outline" style="padding:4px 8px; font-size:0.8rem;" onclick="openEmpHistory('${e.id}')">내역</button>
@@ -1656,6 +1687,10 @@
           document.getElementById('emp-total').value = '15';
         });
         document.getElementById('frm-hist').addEventListener('submit', saveHistory);
+        document.getElementById('sel-emp-sort').addEventListener('change', (e) => {
+          adminEmpSortMode = e.target.value;
+          renderAdminAll();
+        });
         document.getElementById('hist-emp-sel').addEventListener('change', (e) => {
           selectedHistoryEmployeeId = e.target.value || '';
           renderAdminAll();
